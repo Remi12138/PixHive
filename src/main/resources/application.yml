@@ -1,0 +1,35 @@
+server:
+  port: 8123
+  servlet:
+    context-path: /api
+spring:
+  application:
+    name: PixHive_backend
+  # database config
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/PixHive
+    username: xxx
+    password: xxx
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    # print log in development environment
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+# Interface document config
+knife4j:
+  enable: true
+  openapi:
+    title: Interface Document
+    version: 1.0
+    group:
+      default:
+        group-name: group1
+        api-rule: package
+        api-rule-resources:
+          - com.jin.pixhive_backend.controller
