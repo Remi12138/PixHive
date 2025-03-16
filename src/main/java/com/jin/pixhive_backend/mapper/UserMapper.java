@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
 * @author xianjinghuang
-* @description 针对表【user(user)】的数据库操作Mapper
+* @description Database operation Mapper for table [user]
 * @createDate 2025-03-15 10:25:18
 * @Entity com.jin.pixhive_backend.model.entity.User
 */
