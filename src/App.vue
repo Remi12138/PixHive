@@ -9,8 +9,9 @@ import BasicLayout from "@/layouts/BasicLayout.vue";
 import { healthUsingGet } from '@/api/mainController'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 
-const loginUserStore = useLoginUserStore()
-loginUserStore.fetchLoginUser()
+// Move it to access.ts
+// const loginUserStore = useLoginUserStore()
+// loginUserStore.fetchLoginUser()
 
 healthUsingGet().then((res) => {
   console.log(res)

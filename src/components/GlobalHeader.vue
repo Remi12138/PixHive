@@ -19,29 +19,37 @@
           @click="doMenuClick"
         />
       </a-col>
-      <!-- login -->
+      <!-- User Info  -->
       <a-col flex="120px">
-        <div class="user-login-status">
-          <div v-if="loginUserStore.loginUser.id">
-            {{ loginUserStore.loginUser.userName ?? 'DefaultName' }}
-          </div>
-          <div v-else>
-            <a-button type="primary" href="/user/login">Login</a-button>
-          </div>
+        <div v-if="loginUserStore.loginUser.id">
+          <a-dropdown>
+            <ASpace>
+              <a-avatar :src="loginUserStore.loginUser.userAvatar" />
+              {{ loginUserStore.loginUser.userName ?? 'DefaultUser' }}
+            </ASpace>
+            <template #overlay>
+              <a-menu>
+                <a-menu-item @click="doLogout">
+                  <LogoutOutlined />
+                  Logout
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
         </div>
-
       </a-col>
     </a-row>
   </div>
 </template>
 <script lang="ts" setup>
-import { h, ref } from 'vue'
-import { HomeOutlined } from '@ant-design/icons-vue'
+import { h, ref, computed } from 'vue'
+import { HomeOutlined, LogoutOutlined } from '@ant-design/icons-vue'
 import { MenuProps } from 'ant-design-vue'
 
 const loginUserStore = useLoginUserStore()
 
-const items = ref<MenuProps['items']>([
+// menu
+const originItems = [
   {
     key: '/',
     icon: () => h(HomeOutlined),
@@ -49,18 +57,37 @@ const items = ref<MenuProps['items']>([
     title: 'Home',
   },
   {
-    key: '/about',
-    label: 'About',
-    title: 'About',
+    key: '/admin/userManage',
+    label: 'User Manage',
+    title: 'User Manage',
   },
   {
     key: 'others',
     label: h('a', { href: 'https://linkedin.com/in/xianjing-jin-huang', target: '_blank' }, 'LinkedIn'),
     title: 'LinkedIn',
   },
-])
+]
+
+// filter Menus by role
+const filterMenus = (menus = [] as MenuProps['items']) => {
+  return menus?.filter((menu) => {
+    if (menu?.key?.startsWith('/admin')) {
+      const loginUser = loginUserStore.loginUser
+      if (!loginUser || loginUser.userRole !== "admin") {
+        return false
+      }
+    }
+    return true
+  })
+}
+
+// Display the routing array in the menu
+const items = computed<MenuProps['items']>(() => filterMenus(originItems))
+
 import { useRouter } from "vue-router";
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
+import { userLogoutUsingPost } from '@/api/userController'
+import { message } from 'ant-design-vue'
 const router = useRouter();
 
 // Route jump event
@@ -77,6 +104,20 @@ router.afterEach((to, from, next) => {
   current.value = [to.path];
 });
 
+// Logout
+const doLogout = async () => {
+  const res = await userLogoutUsingPost()
+  console.log(res)
+  if (res.data.code === 0) {
+    loginUserStore.setLoginUser({
+      userName: 'notLogin',
+    })
+    message.success('Logout success!')
+    router.push('/user/login')
+  } else {
+    message.error('Logout error: ' + res.data.message)
+  }
+}
 </script>
 
 <style scoped>
