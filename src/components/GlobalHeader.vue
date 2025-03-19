@@ -62,6 +62,16 @@ const originItems = [
     title: 'User Manage',
   },
   {
+    key: '/add_picture',
+    label: 'Add Picture',
+    title: 'Add Picture',
+  },
+  {
+    key: '/admin/pictureManage',
+    label: 'Picture Manage',
+    title: 'Picture Manage',
+  },
+  {
     key: 'others',
     label: h('a', { href: 'https://linkedin.com/in/xianjing-jin-huang', target: '_blank' }, 'LinkedIn'),
     title: 'LinkedIn',
