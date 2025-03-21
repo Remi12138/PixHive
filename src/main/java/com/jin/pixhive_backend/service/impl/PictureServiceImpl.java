@@ -6,19 +6,23 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.jin.pixhive_backend.exception.BusinessException;
 import com.jin.pixhive_backend.exception.ErrorCode;
 import com.jin.pixhive_backend.exception.ThrowUtils;
 import com.jin.pixhive_backend.manage.FileManager;
 import com.jin.pixhive_backend.mapper.PictureMapper;
 import com.jin.pixhive_backend.model.dto.file.UploadPictureResult;
 import com.jin.pixhive_backend.model.dto.picture.PictureQueryRequest;
+import com.jin.pixhive_backend.model.dto.picture.PictureReviewRequest;
 import com.jin.pixhive_backend.model.dto.picture.PictureUploadRequest;
 import com.jin.pixhive_backend.model.entity.Picture;
 import com.jin.pixhive_backend.model.entity.User;
+import com.jin.pixhive_backend.model.enums.PictureReviewStatusEnum;
 import com.jin.pixhive_backend.model.vo.PictureVO;
 import com.jin.pixhive_backend.model.vo.UserVO;
 import com.jin.pixhive_backend.service.PictureService;
 import com.jin.pixhive_backend.service.UserService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -194,6 +198,31 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
     }
 
+    @Override
+    public void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser) {
+        // check params
+        ThrowUtils.throwIf(pictureReviewRequest == null, ErrorCode.PARAMS_ERROR);
+        Long id = pictureReviewRequest.getId();
+        Integer reviewStatus = pictureReviewRequest.getReviewStatus();
+        PictureReviewStatusEnum reviewStatusEnum = PictureReviewStatusEnum.getEnumByValue(reviewStatus);
+        if (id == null || reviewStatusEnum == null || PictureReviewStatusEnum.REVIEWING.equals(reviewStatusEnum)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // check exist
+        Picture oldPicture = this.getById(id);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        // duplicate check (same status)
+        if (oldPicture.getReviewStatus().equals(reviewStatus)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "duplicate check picture");
+        }
+        // update status
+        Picture updatePicture = new Picture();
+        BeanUtils.copyProperties(pictureReviewRequest, updatePicture);
+        updatePicture.setReviewerId(loginUser.getId());
+        updatePicture.setReviewTime(new Date());
+        boolean result = this.updateById(updatePicture);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+    }
 }
 
 

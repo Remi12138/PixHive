@@ -198,7 +198,7 @@ public class PictureController {
     public BaseResponse<PictureTagCategory> listPictureTagCategory() {
         PictureTagCategory pictureTagCategory = new PictureTagCategory();
         List<String> tagList = Arrays.asList("hot", "life", "funny", "creativity", "green", "campus", "background", "resume", "high-definition");
-        List<String> categoryList = Arrays.asList("Wallpapers", "People", "Animals", "Nature", "Food & Drink");
+        List<String> categoryList = Arrays.asList("Wallpapers", "People", "Animals", "Nature", "Food & Drink", "Default");
         pictureTagCategory.setTagList(tagList);
         pictureTagCategory.setCategoryList(categoryList);
         return ResultUtils.success(pictureTagCategory);

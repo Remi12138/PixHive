@@ -47,3 +47,12 @@ create table if not exists picture
     INDEX idx_tags (tags),                 -- search by tag
     INDEX idx_userId (userId)              -- search by userId
 ) comment 'picture' collate = utf8mb4_unicode_ci;
+
+ALTER TABLE picture
+    -- add new column
+    ADD COLUMN reviewStatus INT DEFAULT 0 NOT NULL COMMENT 'review status：0-pending; 1-approved; 2-declined',
+    ADD COLUMN reviewMessage VARCHAR(512) NULL,
+    ADD COLUMN reviewerId BIGINT NULL,
+    ADD COLUMN reviewTime DATETIME NULL;
+
+CREATE INDEX idx_reviewStatus ON picture (reviewStatus);

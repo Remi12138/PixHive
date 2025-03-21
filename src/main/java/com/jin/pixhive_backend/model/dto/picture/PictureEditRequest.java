@@ -17,7 +17,7 @@ public class PictureEditRequest implements Serializable {
 
     private String introduction;
 
-    private String category;
+    private String category = "Default";
 
     private List<String> tags;
 
