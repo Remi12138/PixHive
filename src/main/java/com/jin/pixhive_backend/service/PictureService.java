@@ -23,12 +23,12 @@ public interface PictureService extends IService<Picture> {
     /**
      * upload picture
      *
-     * @param multipartFile
+     * @param InputSource file source
      * @param pictureUploadRequest
      * @param loginUser
      * @return
      */
-    PictureVO uploadPicture(MultipartFile multipartFile,
+    PictureVO uploadPicture(Object InputSource,
                             PictureUploadRequest pictureUploadRequest,
                             User loginUser);
 
@@ -55,6 +55,12 @@ public interface PictureService extends IService<Picture> {
      */
     Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request);
 
+    /**
+     * id cannot be null;
+     * url.length() <= 1024
+     * introduction.length() <= 800
+     * @param picture
+     */
     void validPicture(Picture picture);
 
     /**
@@ -65,4 +71,10 @@ public interface PictureService extends IService<Picture> {
      */
     void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser);
 
+    /**
+     * fill Review
+     * @param picture
+     * @param loginUser
+     */
+    void fillReviewParams(Picture picture, User loginUser);
 }

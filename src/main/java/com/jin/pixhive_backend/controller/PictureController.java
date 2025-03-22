@@ -10,12 +10,10 @@ import com.jin.pixhive_backend.constant.UserConstant;
 import com.jin.pixhive_backend.exception.BusinessException;
 import com.jin.pixhive_backend.exception.ErrorCode;
 import com.jin.pixhive_backend.exception.ThrowUtils;
-import com.jin.pixhive_backend.model.dto.picture.PictureEditRequest;
-import com.jin.pixhive_backend.model.dto.picture.PictureQueryRequest;
-import com.jin.pixhive_backend.model.dto.picture.PictureUpdateRequest;
-import com.jin.pixhive_backend.model.dto.picture.PictureUploadRequest;
+import com.jin.pixhive_backend.model.dto.picture.*;
 import com.jin.pixhive_backend.model.entity.Picture;
 import com.jin.pixhive_backend.model.entity.User;
+import com.jin.pixhive_backend.model.enums.PictureReviewStatusEnum;
 import com.jin.pixhive_backend.model.vo.PictureTagCategory;
 import com.jin.pixhive_backend.model.vo.PictureVO;
 import com.jin.pixhive_backend.service.PictureService;
@@ -46,7 +44,7 @@ public class PictureController {
      * upload picture (can re-upload, update)
      */
     @PostMapping("/upload")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+//    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<PictureVO> uploadPicture(
             @RequestPart("file") MultipartFile multipartFile,
             PictureUploadRequest pictureUploadRequest,
@@ -55,6 +53,20 @@ public class PictureController {
         PictureVO pictureVO = pictureService.uploadPicture(multipartFile, pictureUploadRequest, loginUser);
         return ResultUtils.success(pictureVO);
     }
+
+    /**
+     * by URL upload picture (can re-upload, update)
+     */
+    @PostMapping("/upload/url")
+    public BaseResponse<PictureVO> uploadPictureByUrl(
+            @RequestBody PictureUploadRequest pictureUploadRequest,
+            HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        String fileUrl = pictureUploadRequest.getFileUrl();
+        PictureVO pictureVO = pictureService.uploadPicture(fileUrl, pictureUploadRequest, loginUser);
+        return ResultUtils.success(pictureVO);
+    }
+
 
     /**
      * delete picture
@@ -84,7 +96,8 @@ public class PictureController {
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest) {
+    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest,
+                                               HttpServletRequest request) {
         if (pictureUpdateRequest == null || pictureUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -99,6 +112,9 @@ public class PictureController {
         long id = pictureUpdateRequest.getId();
         Picture oldPicture = pictureService.getById(id);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        // fill review
+        User loginUser = userService.getLoginUser(request);
+        pictureService.fillReviewParams(oldPicture, loginUser);
         // update to database
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
@@ -147,7 +163,7 @@ public class PictureController {
     }
 
     /**
-     * list PictureVO By Page
+     * list PictureVO By Page (show to user)
      */
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest,
@@ -156,6 +172,8 @@ public class PictureController {
         long size = pictureQueryRequest.getPageSize();
         // Restricted crawler
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // user can only see "pass" picture
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
         // query
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
                 pictureService.getQueryWrapper(pictureQueryRequest));
@@ -180,6 +198,8 @@ public class PictureController {
         // valid picture
         pictureService.validPicture(picture);
         User loginUser = userService.getLoginUser(request);
+        // fill review
+        pictureService.fillReviewParams(picture, loginUser);
         // check exist
         long id = pictureEditRequest.getId();
         Picture oldPicture = pictureService.getById(id);
@@ -194,6 +214,9 @@ public class PictureController {
         return ResultUtils.success(true);
     }
 
+    /**
+     * show Picture & Tag Category in menu
+     */
     @GetMapping("/tag_category")
     public BaseResponse<PictureTagCategory> listPictureTagCategory() {
         PictureTagCategory pictureTagCategory = new PictureTagCategory();
@@ -202,6 +225,19 @@ public class PictureController {
         pictureTagCategory.setTagList(tagList);
         pictureTagCategory.setCategoryList(categoryList);
         return ResultUtils.success(pictureTagCategory);
+    }
+
+    /**
+     * admin do review picture
+     */
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> doPictureReview(@RequestBody PictureReviewRequest pictureReviewRequest,
+                                                 HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureReviewRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        pictureService.doPictureReview(pictureReviewRequest, loginUser);
+        return ResultUtils.success(true);
     }
 
 }

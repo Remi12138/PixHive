@@ -10,6 +10,9 @@ import com.jin.pixhive_backend.exception.BusinessException;
 import com.jin.pixhive_backend.exception.ErrorCode;
 import com.jin.pixhive_backend.exception.ThrowUtils;
 import com.jin.pixhive_backend.manage.FileManager;
+import com.jin.pixhive_backend.manage.upload.FilePictureUpload;
+import com.jin.pixhive_backend.manage.upload.PictureUploadTemplate;
+import com.jin.pixhive_backend.manage.upload.UrlPictureUpload;
 import com.jin.pixhive_backend.mapper.PictureMapper;
 import com.jin.pixhive_backend.model.dto.file.UploadPictureResult;
 import com.jin.pixhive_backend.model.dto.picture.PictureQueryRequest;
@@ -44,13 +47,17 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     implements PictureService {
 
     @Resource
-    private FileManager fileManager;
-
-    @Resource
     private UserService userService;
 
+    @Resource
+    private FilePictureUpload filePictureUpload;
+
+    @Resource
+    private UrlPictureUpload urlPictureUpload;
+
+
     @Override
-    public PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser) {
+    public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR);
         // determine update/new picture
         Long pictureId = null;
@@ -59,15 +66,24 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
         // already has pictureId -> update picture，need to check if picture exists
         if (pictureId != null) {
-            boolean exists = this.lambdaQuery()
-                    .eq(Picture::getId, pictureId)
-                    .exists();
-            ThrowUtils.throwIf(!exists, ErrorCode.NOT_FOUND_ERROR, "Picture not exist. pictureId: " + pictureId);
+            Picture oldPicture = this.getById(pictureId);
+            ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "Picture not exist. pictureId: " + pictureId);
+            // self & admin can update
+            if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            }
         }
         // set path by userId
         String uploadPathPrefix = String.format("public/%s", loginUser.getId());
+
+        // inputSource -> different upload function
+        PictureUploadTemplate pictureUploadTemplate = filePictureUpload;
+        if (inputSource instanceof String) {
+            pictureUploadTemplate = urlPictureUpload;
+        }
         // upload picture
-        UploadPictureResult uploadPictureResult = fileManager.uploadPicture(multipartFile, uploadPathPrefix);
+        UploadPictureResult uploadPictureResult = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix);
+
         // constructs the picture information to be stored
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
@@ -78,6 +94,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         picture.setPicScale(uploadPictureResult.getPicScale());
         picture.setPicFormat(uploadPictureResult.getPicFormat());
         picture.setUserId(loginUser.getId());
+        // fill review
+        fillReviewParams(picture, loginUser);
+
         // if pictureId != null, -> update,  else -> new picture
         if (pictureId != null) {
             // update, assign id, editTime
@@ -110,6 +129,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         String picFormat = pictureQueryRequest.getPicFormat();
         String searchText = pictureQueryRequest.getSearchText();
         Long userId = pictureQueryRequest.getUserId();
+        Integer reviewStatus = pictureQueryRequest.getReviewStatus();
+        String reviewMessage = pictureQueryRequest.getReviewMessage();
+        Long reviewerId = pictureQueryRequest.getReviewerId();
         String sortField = pictureQueryRequest.getSortField();
         String sortOrder = pictureQueryRequest.getSortOrder();
         // Search from multiple fields
@@ -130,6 +152,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         queryWrapper.eq(ObjUtil.isNotEmpty(picHeight), "picHeight", picHeight);
         queryWrapper.eq(ObjUtil.isNotEmpty(picSize), "picSize", picSize);
         queryWrapper.eq(ObjUtil.isNotEmpty(picScale), "picScale", picScale);
+        queryWrapper.eq(ObjUtil.isNotEmpty(reviewStatus), "reviewStatus", reviewStatus);
+        queryWrapper.eq(ObjUtil.isNotEmpty(reviewerId), "reviewerId", reviewerId);
+        queryWrapper.like(StrUtil.isNotBlank(reviewMessage), "reviewMessage", reviewMessage);
+
         // JSON query
         if (CollUtil.isNotEmpty(tags)) {
             for (String tag : tags) {
@@ -205,6 +231,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Long id = pictureReviewRequest.getId();
         Integer reviewStatus = pictureReviewRequest.getReviewStatus();
         PictureReviewStatusEnum reviewStatusEnum = PictureReviewStatusEnum.getEnumByValue(reviewStatus);
+        // pass in pictureID should be in status pass/reject
+        // should not pass in reviewing
         if (id == null || reviewStatusEnum == null || PictureReviewStatusEnum.REVIEWING.equals(reviewStatusEnum)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -223,6 +251,21 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         boolean result = this.updateById(updatePicture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
     }
+
+    @Override
+    public void fillReviewParams(Picture picture, User loginUser) {
+        if (userService.isAdmin(loginUser)) {
+            // admin -> always pass
+            picture.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+            picture.setReviewerId(loginUser.getId());
+            picture.setReviewMessage("Uploaded by the administrator, it automatically passes!");
+            picture.setReviewTime(new Date());
+        } else {
+            // non-admin, create/update -> reviewing
+            picture.setReviewStatus(PictureReviewStatusEnum.REVIEWING.getValue());
+        }
+    }
+
 }
 
 
