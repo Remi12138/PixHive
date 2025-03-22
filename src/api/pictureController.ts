@@ -34,6 +34,7 @@ export async function editPictureUsingPost(
 
 /** getPictureById GET /api/pictrue/get */
 export async function getPictureByIdUsingGet(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.getPictureByIdUsingGETParams,
   options?: { [key: string]: any }
 ) {
@@ -48,6 +49,7 @@ export async function getPictureByIdUsingGet(
 
 /** getPictureVOById GET /api/pictrue/get/vo */
 export async function getPictureVoByIdUsingGet(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.getPictureVOByIdUsingGETParams,
   options?: { [key: string]: any }
 ) {
@@ -90,6 +92,21 @@ export async function listPictureVoByPageUsingPost(
   })
 }
 
+/** doPictureReview POST /api/pictrue/review */
+export async function doPictureReviewUsingPost(
+  body: API.PictureReviewRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean_>('/api/pictrue/review', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
 /** listPictureTagCategory GET /api/pictrue/tag_category */
 export async function listPictureTagCategoryUsingGet(options?: { [key: string]: any }) {
   return request<API.BaseResponsePictureTagCategory_>('/api/pictrue/tag_category', {
@@ -115,6 +132,7 @@ export async function updatePictureUsingPost(
 
 /** uploadPicture POST /api/pictrue/upload */
 export async function uploadPictureUsingPost(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.uploadPictureUsingPOSTParams,
   body: {},
   file?: File,

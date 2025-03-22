@@ -2,7 +2,7 @@
   <div id="pictureManagePage">
     <!--  search form  -->
     <a-form layout="inline" :model="searchParams" @finish="doSearch">
-      <a-form-item label="Key words" name="searchText">
+      <a-form-item label="key words" name="searchText">
         <a-input
           v-model:value="searchParams.searchText"
           placeholder="name or introduction"
@@ -17,6 +17,15 @@
           v-model:value="searchParams.tags"
           mode="tags"
           placeholder="enter tags"
+          style="min-width: 180px"
+          allow-clear
+        />
+      </a-form-item>
+      <a-form-item label="review status" name="reviewStatus">
+        <a-select
+          v-model:value="searchParams.reviewStatus"
+          :options="PIC_REVIEW_STATUS_OPTIONS"
+          placeholder="select review status"
           style="min-width: 180px"
           allow-clear
         />
@@ -53,14 +62,39 @@
           <div>Scale：{{ record.picScale }}</div>
           <div>Size：{{ (record.picSize / 1024).toFixed(2) }}KB</div>
         </template>
+        <!-- review info -->
+        <template v-if="column.dataIndex === 'reviewMessage'">
+          <div>Review Status：{{ PIC_REVIEW_STATUS_MAP[record.reviewStatus] }}</div>
+          <div>Review Message：{{ record.reviewMessage }}</div>
+          <div>Reviewer Id：{{ record.reviewerId }}</div>
+          <div v-if="record.reviewTime">
+            Review Time: {{ dayjs(record.reviewTime).format('YYYY-MM-DD HH:mm:ss') }}
+          </div>
+        </template>
         <template v-else-if="column.dataIndex === 'createTime'">
           {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
         </template>
         <template v-else-if="column.dataIndex === 'editTime'">
           {{ dayjs(record.editTime).format('YYYY-MM-DD HH:mm:ss') }}
         </template>
+
         <template v-else-if="column.key === 'action'">
-          <a-space>
+          <a-space wrap>
+            <a-button
+              v-if="record.reviewStatus !== PIC_REVIEW_STATUS_ENUM.PASS"
+              type="link"
+              @click="handleReview(record, PIC_REVIEW_STATUS_ENUM.PASS)"
+            >
+              Pass
+            </a-button>
+            <a-button
+              v-if="record.reviewStatus !== PIC_REVIEW_STATUS_ENUM.REJECT"
+              type="link"
+              danger
+              @click="handleReview(record, PIC_REVIEW_STATUS_ENUM.REJECT)"
+            >
+              Reject
+            </a-button>
             <a-button type="link" :href="`/add_picture?id=${record.id}`" target="_blank">Edit</a-button>
             <a-button type="link" danger @click="doDelete(record.id)">Delete</a-button>
           </a-space>
@@ -73,12 +107,13 @@
 
 import { SmileOutlined, DownOutlined } from '@ant-design/icons-vue';
 import {
-  deletePictureUsingPost,
+  deletePictureUsingPost, doPictureReviewUsingPost,
   listPictureByPageUsingPost
 } from '@/api/pictureController'
 import { ref, reactive, onMounted, computed } from "vue"
 import { message } from 'ant-design-vue'
 import dayjs from "dayjs"
+import { PIC_REVIEW_STATUS_ENUM, PIC_REVIEW_STATUS_MAP, PIC_REVIEW_STATUS_OPTIONS } from '../../constants/picture'
 const columns = [
   {
     title: 'id',
@@ -114,6 +149,10 @@ const columns = [
     title: 'userId',
     dataIndex: 'userId',
     width: 80,
+  },
+  {
+    title: 'reviewMessage',
+    dataIndex: 'reviewMessage',
   },
   {
     title: 'createTime',
@@ -196,6 +235,23 @@ const doDelete = async (id: string) => {
     fetchData()
   } else {
     message.error('Delete Error: ' + res.data.message)
+  }
+}
+
+// review picture
+const handleReview = async (record: API.Picture, reviewStatus: number) => {
+  const reviewMessage = reviewStatus === PIC_REVIEW_STATUS_ENUM.PASS ? 'admin: pass' : 'admin: reject'
+  const res = await doPictureReviewUsingPost({
+    id: record.id,
+    reviewStatus,
+    reviewMessage,
+  })
+  if (res.data.code === 0) {
+    message.success('review success')
+    // fetch data again (update)
+    fetchData()
+  } else {
+    message.error('review failed，' + res.data.message)
   }
 }
 </script>
