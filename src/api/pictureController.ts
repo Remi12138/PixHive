@@ -2,12 +2,12 @@
 /* eslint-disable */
 import request from '@/request'
 
-/** deletePicture POST /api/pictrue/delete */
+/** deletePicture POST /api/picture/delete */
 export async function deletePictureUsingPost(
   body: API.DeleteRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean_>('/api/pictrue/delete', {
+  return request<API.BaseResponseBoolean_>('/api/picture/delete', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -17,12 +17,12 @@ export async function deletePictureUsingPost(
   })
 }
 
-/** editPicture POST /api/pictrue/edit */
+/** editPicture POST /api/picture/edit */
 export async function editPictureUsingPost(
   body: API.PictureEditRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean_>('/api/pictrue/edit', {
+  return request<API.BaseResponseBoolean_>('/api/picture/edit', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -32,13 +32,12 @@ export async function editPictureUsingPost(
   })
 }
 
-/** getPictureById GET /api/pictrue/get */
+/** getPictureById GET /api/picture/get */
 export async function getPictureByIdUsingGet(
-  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.getPictureByIdUsingGETParams,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponsePicture_>('/api/pictrue/get', {
+  return request<API.BaseResponsePicture_>('/api/picture/get', {
     method: 'GET',
     params: {
       ...params,
@@ -47,13 +46,12 @@ export async function getPictureByIdUsingGet(
   })
 }
 
-/** getPictureVOById GET /api/pictrue/get/vo */
+/** getPictureVOById GET /api/picture/get/vo */
 export async function getPictureVoByIdUsingGet(
-  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.getPictureVOByIdUsingGETParams,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponsePictureVO_>('/api/pictrue/get/vo', {
+  return request<API.BaseResponsePictureVO_>('/api/picture/get/vo', {
     method: 'GET',
     params: {
       ...params,
@@ -62,12 +60,12 @@ export async function getPictureVoByIdUsingGet(
   })
 }
 
-/** listPictureByPage POST /api/pictrue/list/page */
+/** listPictureByPage POST /api/picture/list/page */
 export async function listPictureByPageUsingPost(
   body: API.PictureQueryRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponsePagePicture_>('/api/pictrue/list/page', {
+  return request<API.BaseResponsePagePicture_>('/api/picture/list/page', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -77,12 +75,12 @@ export async function listPictureByPageUsingPost(
   })
 }
 
-/** listPictureVOByPage POST /api/pictrue/list/page/vo */
+/** listPictureVOByPage POST /api/picture/list/page/vo */
 export async function listPictureVoByPageUsingPost(
   body: API.PictureQueryRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponsePagePictureVO_>('/api/pictrue/list/page/vo', {
+  return request<API.BaseResponsePagePictureVO_>('/api/picture/list/page/vo', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -92,12 +90,12 @@ export async function listPictureVoByPageUsingPost(
   })
 }
 
-/** doPictureReview POST /api/pictrue/review */
+/** doPictureReview POST /api/picture/review */
 export async function doPictureReviewUsingPost(
   body: API.PictureReviewRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean_>('/api/pictrue/review', {
+  return request<API.BaseResponseBoolean_>('/api/picture/review', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -107,20 +105,20 @@ export async function doPictureReviewUsingPost(
   })
 }
 
-/** listPictureTagCategory GET /api/pictrue/tag_category */
+/** listPictureTagCategory GET /api/picture/tag_category */
 export async function listPictureTagCategoryUsingGet(options?: { [key: string]: any }) {
-  return request<API.BaseResponsePictureTagCategory_>('/api/pictrue/tag_category', {
+  return request<API.BaseResponsePictureTagCategory_>('/api/picture/tag_category', {
     method: 'GET',
     ...(options || {}),
   })
 }
 
-/** updatePicture POST /api/pictrue/update */
+/** updatePicture POST /api/picture/update */
 export async function updatePictureUsingPost(
   body: API.PictureUpdateRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean_>('/api/pictrue/update', {
+  return request<API.BaseResponseBoolean_>('/api/picture/update', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -130,9 +128,8 @@ export async function updatePictureUsingPost(
   })
 }
 
-/** uploadPicture POST /api/pictrue/upload */
+/** uploadPicture POST /api/picture/upload */
 export async function uploadPictureUsingPost(
-  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.uploadPictureUsingPOSTParams,
   body: {},
   file?: File,
@@ -160,13 +157,43 @@ export async function uploadPictureUsingPost(
     }
   })
 
-  return request<API.BaseResponsePictureVO_>('/api/pictrue/upload', {
+  return request<API.BaseResponsePictureVO_>('/api/picture/upload', {
     method: 'POST',
     params: {
       ...params,
     },
     data: formData,
     requestType: 'form',
+    ...(options || {}),
+  })
+}
+
+/** uploadPictureByBatch POST /api/picture/upload/batch */
+export async function uploadPictureByBatchUsingPost(
+  body: API.PictureUploadByBatchRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseInt_>('/api/picture/upload/batch', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
+/** uploadPictureByUrl POST /api/picture/upload/url */
+export async function uploadPictureByUrlUsingPost(
+  body: API.PictureUploadRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponsePictureVO_>('/api/picture/upload/url', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
     ...(options || {}),
   })
 }
