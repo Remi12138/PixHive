@@ -17,6 +17,7 @@ import com.jin.pixhive_backend.mapper.PictureMapper;
 import com.jin.pixhive_backend.model.dto.file.UploadPictureResult;
 import com.jin.pixhive_backend.model.dto.picture.PictureQueryRequest;
 import com.jin.pixhive_backend.model.dto.picture.PictureReviewRequest;
+import com.jin.pixhive_backend.model.dto.picture.PictureUploadByBatchRequest;
 import com.jin.pixhive_backend.model.dto.picture.PictureUploadRequest;
 import com.jin.pixhive_backend.model.entity.Picture;
 import com.jin.pixhive_backend.model.entity.User;
@@ -25,12 +26,19 @@ import com.jin.pixhive_backend.model.vo.PictureVO;
 import com.jin.pixhive_backend.model.vo.UserVO;
 import com.jin.pixhive_backend.service.PictureService;
 import com.jin.pixhive_backend.service.UserService;
+import lombok.extern.slf4j.Slf4j;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +50,7 @@ import java.util.stream.Collectors;
 * @description database operation service implement for table [picture]
 * @createDate 2025-03-16 17:37:00
 */
+@Slf4j
 @Service
 public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     implements PictureService {
@@ -87,7 +96,14 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // constructs the picture information to be stored
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
-        picture.setName(uploadPictureResult.getPicName());
+
+        // support pictureUploadRequest pass picture name
+        String picName = uploadPictureResult.getPicName();
+        if (pictureUploadRequest != null && StrUtil.isNotBlank(pictureUploadRequest.getPicName())) {
+            picName = pictureUploadRequest.getPicName();
+        }
+        picture.setName(picName);
+
         picture.setPicSize(uploadPictureResult.getPicSize());
         picture.setPicWidth(uploadPictureResult.getPicWidth());
         picture.setPicHeight(uploadPictureResult.getPicHeight());
@@ -264,6 +280,65 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             // non-admin, create/update -> reviewing
             picture.setReviewStatus(PictureReviewStatusEnum.REVIEWING.getValue());
         }
+    }
+
+    @Override
+    public Integer uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser) {
+        String searchText = pictureUploadByBatchRequest.getSearchText();
+        // limit count
+        Integer count = pictureUploadByBatchRequest.getCount();
+        ThrowUtils.throwIf(count > 30, ErrorCode.PARAMS_ERROR, "batch size max: 30");
+        String namePrefix = pictureUploadByBatchRequest.getNamePrefix();
+        if (StrUtil.isBlank(namePrefix)) {
+            log.info("namePrefix is blank");
+            namePrefix = searchText;
+        }
+        // fetch url
+        String fetchUrl = String.format("https://cn.bing.com/images/async?q=%s&mmasync=1", searchText);
+        Document document;
+        try {
+            document = Jsoup.connect(fetchUrl).get();
+        } catch (IOException e) {
+            log.error("Fetch Error", e);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "Fetch Error");
+        }
+        // parsing content
+        Element div = document.getElementsByClass("dgControl").first();
+        if (ObjUtil.isNull(div)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "Fetch Error");
+        }
+        Elements imgElementList = div.select("img.mimg");
+        int uploadCount = 0;
+        // traverse, upload in turn
+        for (Element imgElement : imgElementList) {
+            String fileUrl = imgElement.attr("src");
+            if (StrUtil.isBlank(fileUrl)) {
+                log.info("This url is blank, pass: {}", fileUrl);
+                continue;
+            }
+            // remove url after ? to avoid escape problems
+            int questionMarkIndex = fileUrl.indexOf("?");
+            if (questionMarkIndex > -1) {
+                fileUrl = fileUrl.substring(0, questionMarkIndex);
+            }
+            // upload
+            PictureUploadRequest pictureUploadRequest = new PictureUploadRequest();
+            pictureUploadRequest.setFileUrl(fileUrl);
+            log.info("namePrefix = {}", namePrefix);
+            pictureUploadRequest.setPicName(namePrefix + (1 + uploadCount));
+            try {
+                PictureVO pictureVO = this.uploadPicture(fileUrl, pictureUploadRequest, loginUser);
+                log.info("Upload Success, id = {}", pictureVO.getId());
+                uploadCount++;
+            } catch (Exception e) {
+                log.error("Upload Error", e);
+                continue;
+            }
+            if (uploadCount >= count) {
+                break;
+            }
+        }
+        return uploadCount;
     }
 
 }
