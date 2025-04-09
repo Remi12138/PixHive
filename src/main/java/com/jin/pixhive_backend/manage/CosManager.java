@@ -1,5 +1,6 @@
 package com.jin.pixhive_backend.manage;
 
+import cn.hutool.core.io.FileUtil;
 import com.jin.pixhive_backend.config.CosClientConfig;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.COSObject;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class CosManager {
@@ -56,9 +59,20 @@ public class CosManager {
         PicOperations picOperations = new PicOperations();
         // 1: Return the original image info
         picOperations.setIsPicInfo(1);
+
+        // set rules
+        List<PicOperations.Rule> rules = new ArrayList<>();
+        // picture compress (convert to webp format)
+        String webpKey = FileUtil.mainName(key) + ".webp";
+        PicOperations.Rule compressRule = new PicOperations.Rule();
+        compressRule.setRule("imageMogr2/format/webp");
+        compressRule.setBucket(cosClientConfig.getBucket());
+        compressRule.setFileId(webpKey);
+        rules.add(compressRule);
+        picOperations.setRules(rules);
+
         // set processing parameter
         putObjectRequest.setPicOperations(picOperations);
         return cosClient.putObject(putObjectRequest);
     }
-
 }
