@@ -56,3 +56,7 @@ ALTER TABLE picture
     ADD COLUMN reviewTime DATETIME NULL;
 
 CREATE INDEX idx_reviewStatus ON picture (reviewStatus);
+
+ALTER TABLE picture
+    -- add new col
+    ADD COLUMN thumbnailUrl varchar(512) NULL COMMENT 'thumbnail url';

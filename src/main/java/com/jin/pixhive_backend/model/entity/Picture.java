@@ -19,6 +19,8 @@ public class Picture implements Serializable {
 
     private String url;
 
+    private String thumbnailUrl;
+
     private String name;
 
     private String introduction;

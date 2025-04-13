@@ -9,7 +9,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jin.pixhive_backend.exception.BusinessException;
 import com.jin.pixhive_backend.exception.ErrorCode;
 import com.jin.pixhive_backend.exception.ThrowUtils;
+import com.jin.pixhive_backend.manage.CosManager;
 import com.jin.pixhive_backend.manage.FileManager;
+import com.jin.pixhive_backend.manage.delete.PictureFileCleaner;
 import com.jin.pixhive_backend.manage.upload.FilePictureUpload;
 import com.jin.pixhive_backend.manage.upload.PictureUploadTemplate;
 import com.jin.pixhive_backend.manage.upload.UrlPictureUpload;
@@ -33,6 +35,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -48,7 +52,6 @@ import java.util.stream.Collectors;
 /**
 * @author xianjinghuang
 * @description database operation service implement for table [picture]
-* @createDate 2025-03-16 17:37:00
 */
 @Slf4j
 @Service
@@ -64,6 +67,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     @Resource
     private UrlPictureUpload urlPictureUpload;
 
+    @Resource
+    private PictureFileCleaner pictureFileCleaner;
 
     @Override
     public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
@@ -81,6 +86,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
             }
+            // delete old picture in COS
+            pictureFileCleaner.clearPictureFile(oldPicture);
         }
         // set path by userId
         String uploadPathPrefix = String.format("public/%s", loginUser.getId());
@@ -96,6 +103,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // constructs the picture information to be stored
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
+        picture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
 
         // support pictureUploadRequest pass picture name
         String picName = uploadPictureResult.getPicName();

@@ -2,6 +2,10 @@ server:
   port: 8123
   servlet:
     context-path: /api
+    # cookie expires in 30 days
+    session:
+      cookie:
+        max-age: 2592000
 spring:
   application:
     name: PixHive_backend
@@ -17,6 +21,11 @@ spring:
     host: 127.0.0.1
     port: 6379
     timeout: 5000
+  # Session config
+  session:
+    store-type: redis
+    # expires in 30 days
+    timeout: 2592000
   # Expand the file upload volume (default 1M)
   servlet:
     multipart:

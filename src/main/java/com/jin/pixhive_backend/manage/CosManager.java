@@ -3,6 +3,7 @@ package com.jin.pixhive_backend.manage;
 import cn.hutool.core.io.FileUtil;
 import com.jin.pixhive_backend.config.CosClientConfig;
 import com.qcloud.cos.COSClient;
+import com.qcloud.cos.exception.CosClientException;
 import com.qcloud.cos.model.COSObject;
 import com.qcloud.cos.model.GetObjectRequest;
 import com.qcloud.cos.model.PutObjectRequest;
@@ -57,22 +58,43 @@ public class CosManager {
                 file);
         // Process pictures (Obtaining basic info is also considered as processing)
         PicOperations picOperations = new PicOperations();
-        // 1: Return the original image info
+        // "1": Return the original image info
         picOperations.setIsPicInfo(1);
 
         // set rules
         List<PicOperations.Rule> rules = new ArrayList<>();
-        // picture compress (convert to webp format)
+        // 1. picture compress (convert to webp format, not affect dpi, format adjustment)
         String webpKey = FileUtil.mainName(key) + ".webp";
         PicOperations.Rule compressRule = new PicOperations.Rule();
         compressRule.setRule("imageMogr2/format/webp");
         compressRule.setBucket(cosClientConfig.getBucket());
         compressRule.setFileId(webpKey);
         rules.add(compressRule);
+
+        // 2. thumbnail
+        // when bigger than 20 kb, generate thumbnail
+        if (file.length() > 20 * 1024) {
+            PicOperations.Rule thumbnailRule = new PicOperations.Rule();
+            thumbnailRule.setBucket(cosClientConfig.getBucket());
+            String thumbnailKey = FileUtil.mainName(key) + "_thumbnail." + FileUtil.getSuffix(key);
+            thumbnailRule.setFileId(thumbnailKey);
+            // rule /thumbnail/<Width>x<Height>>（if ori is smaller, stay the same）
+            thumbnailRule.setRule(String.format("imageMogr2/thumbnail/%sx%s>", 256, 256));
+            rules.add(thumbnailRule);
+        }
+
         picOperations.setRules(rules);
 
         // set processing parameter
         putObjectRequest.setPicOperations(picOperations);
         return cosClient.putObject(putObjectRequest);
     }
+
+    /**
+     * delete object
+     */
+    public void deleteObject(String key) throws CosClientException {
+        cosClient.deleteObject(cosClientConfig.getBucket(), key);
+    }
+
 }

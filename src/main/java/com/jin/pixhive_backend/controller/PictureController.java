@@ -13,6 +13,7 @@ import com.jin.pixhive_backend.constant.UserConstant;
 import com.jin.pixhive_backend.exception.BusinessException;
 import com.jin.pixhive_backend.exception.ErrorCode;
 import com.jin.pixhive_backend.exception.ThrowUtils;
+import com.jin.pixhive_backend.manage.delete.PictureFileCleaner;
 import com.jin.pixhive_backend.model.dto.picture.*;
 import com.jin.pixhive_backend.model.entity.Picture;
 import com.jin.pixhive_backend.model.entity.User;
@@ -50,6 +51,9 @@ public class PictureController {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private PictureFileCleaner pictureFileCleaner;
 
     private final Cache<String, String> LOCAL_CACHE =
             Caffeine.newBuilder().initialCapacity(1024)
@@ -106,6 +110,8 @@ public class PictureController {
         // remove from database
         boolean result = pictureService.removeById(id);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        // delete in COS
+        pictureFileCleaner.clearPictureFile(oldPicture);
         return ResultUtils.success(true);
     }
 

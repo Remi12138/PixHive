@@ -12,6 +12,8 @@ public class UploadPictureResult {
 
     private String url;
 
+    private String thumbnailUrl;
+
     private String picName;
 
     private Long picSize;
