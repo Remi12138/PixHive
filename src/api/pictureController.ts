@@ -34,6 +34,7 @@ export async function editPictureUsingPost(
 
 /** getPictureById GET /api/picture/get */
 export async function getPictureByIdUsingGet(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.getPictureByIdUsingGETParams,
   options?: { [key: string]: any }
 ) {
@@ -48,6 +49,7 @@ export async function getPictureByIdUsingGet(
 
 /** getPictureVOById GET /api/picture/get/vo */
 export async function getPictureVoByIdUsingGet(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.getPictureVOByIdUsingGETParams,
   options?: { [key: string]: any }
 ) {
@@ -81,6 +83,21 @@ export async function listPictureVoByPageUsingPost(
   options?: { [key: string]: any }
 ) {
   return request<API.BaseResponsePagePictureVO_>('/api/picture/list/page/vo', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
+/** listPictureVOByPageWithCache POST /api/picture/list/page/vo/cache */
+export async function listPictureVoByPageWithCacheUsingPost(
+  body: API.PictureQueryRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponsePagePictureVO_>('/api/picture/list/page/vo/cache', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -130,6 +147,7 @@ export async function updatePictureUsingPost(
 
 /** uploadPicture POST /api/picture/upload */
 export async function uploadPictureUsingPost(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.uploadPictureUsingPOSTParams,
   body: {},
   file?: File,
