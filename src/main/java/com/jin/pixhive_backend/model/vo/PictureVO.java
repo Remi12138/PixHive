@@ -42,6 +42,8 @@ public class PictureVO implements Serializable {
 
     private Long userId;
 
+    private Long spaceId;
+
     private Date createTime;
 
     private Date editTime;

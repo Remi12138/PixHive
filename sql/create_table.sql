@@ -60,3 +60,28 @@ CREATE INDEX idx_reviewStatus ON picture (reviewStatus);
 ALTER TABLE picture
     -- add new col
     ADD COLUMN thumbnailUrl varchar(512) NULL COMMENT 'thumbnail url';
+
+-- table: space
+create table if not exists space
+(
+    id         bigint auto_increment comment 'id' primary key,
+    spaceName  varchar(128)                       null,
+    spaceLevel int      default 0                 null comment '0-Starter, 1-Pro, 2-Premium',
+    maxSize    bigint   default 0                 null,
+    maxCount   bigint   default 0                 null,
+    totalSize  bigint   default 0                 null,
+    totalCount bigint   default 0                 null,
+    userId     bigint                             not null,
+    createTime datetime default CURRENT_TIMESTAMP not null,
+    editTime   datetime default CURRENT_TIMESTAMP not null,
+    updateTime datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    isDelete   tinyint  default 0                 not null,
+    index idx_userId (userId),
+    index idx_spaceName (spaceName),
+    index idx_spaceLevel (spaceLevel)
+) comment 'space' collate = utf8mb4_unicode_ci;
+
+
+ALTER TABLE picture
+    ADD COLUMN spaceId  bigint  null comment 'space id (null: public space)';
+CREATE INDEX idx_spaceId ON picture (spaceId);

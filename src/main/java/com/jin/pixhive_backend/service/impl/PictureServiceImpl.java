@@ -3,6 +3,7 @@ package com.jin.pixhive_backend.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -17,16 +18,15 @@ import com.jin.pixhive_backend.manage.upload.PictureUploadTemplate;
 import com.jin.pixhive_backend.manage.upload.UrlPictureUpload;
 import com.jin.pixhive_backend.mapper.PictureMapper;
 import com.jin.pixhive_backend.model.dto.file.UploadPictureResult;
-import com.jin.pixhive_backend.model.dto.picture.PictureQueryRequest;
-import com.jin.pixhive_backend.model.dto.picture.PictureReviewRequest;
-import com.jin.pixhive_backend.model.dto.picture.PictureUploadByBatchRequest;
-import com.jin.pixhive_backend.model.dto.picture.PictureUploadRequest;
+import com.jin.pixhive_backend.model.dto.picture.*;
 import com.jin.pixhive_backend.model.entity.Picture;
+import com.jin.pixhive_backend.model.entity.Space;
 import com.jin.pixhive_backend.model.entity.User;
 import com.jin.pixhive_backend.model.enums.PictureReviewStatusEnum;
 import com.jin.pixhive_backend.model.vo.PictureVO;
 import com.jin.pixhive_backend.model.vo.UserVO;
 import com.jin.pixhive_backend.service.PictureService;
+import com.jin.pixhive_backend.service.SpaceService;
 import com.jin.pixhive_backend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,6 +38,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -70,9 +71,35 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     @Resource
     private PictureFileCleaner pictureFileCleaner;
 
+    @Resource
+    private SpaceService spaceService;
+
+    @Resource
+    private TransactionTemplate transactionTemplate;
+
     @Override
     public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR);
+
+        // check space
+        Long spaceId = pictureUploadRequest.getSpaceId();
+        if (spaceId != null) {
+            // check if space exist
+            Space space = spaceService.getById(spaceId);
+            ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "Space not found!");
+            // only space creator(admin) can upload
+            if (!loginUser.getId().equals(space.getUserId())) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "No permission to upload picture to this space!");
+            }
+            // check quota
+            if (space.getTotalCount() >= space.getMaxCount()) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "Space max count exceeded!");
+            }
+            if (space.getTotalSize() >= space.getMaxSize()) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "Space max size exceeded!");
+            }
+        }
+
         // determine update/new picture
         Long pictureId = null;
         if (pictureUploadRequest != null) {
@@ -86,11 +113,29 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
             }
+            // Check whether the space is the same as when created
+            if (spaceId == null) {
+                // no pass spaceId, use old one (also works for public)
+                spaceId = oldPicture.getSpaceId();
+            } else {
+                if (ObjUtil.notEqual(spaceId, oldPicture.getSpaceId())) {
+                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "Updated SpaceId and Original spaceId diff!");
+                }
+            }
             // delete old picture in COS
             pictureFileCleaner.clearPictureFile(oldPicture);
+            // only when store/delete in database, re-compute quote.
+            // no need to compute here
         }
-        // set path by userId
-        String uploadPathPrefix = String.format("public/%s", loginUser.getId());
+        // set path by userId and spaceId
+        String uploadPathPrefix;
+        if (spaceId == null) {
+            // to public
+            uploadPathPrefix = String.format("public/%s", loginUser.getId());
+        } else {
+            // to space
+            uploadPathPrefix = String.format("space/%s", spaceId);
+        }
 
         // inputSource -> different upload function
         PictureUploadTemplate pictureUploadTemplate = filePictureUpload;
@@ -102,6 +147,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         // constructs the picture information to be stored
         Picture picture = new Picture();
+        picture.setSpaceId(spaceId);
         picture.setUrl(uploadPictureResult.getUrl());
         picture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
 
@@ -129,8 +175,23 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
         // if no assign id -> insert (new one)
         // assign id -> update
-        boolean result = this.saveOrUpdate(picture);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "Upload Error, database operation failed!");
+
+        // execute transaction
+        Long finalSpaceId = spaceId;
+        transactionTemplate.execute(status -> {
+            boolean result = this.saveOrUpdate(picture);
+            ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "Upload Error, database operation failed!");
+            if (finalSpaceId != null) {
+                boolean update = spaceService.lambdaUpdate()
+                        .eq(Space::getId, finalSpaceId)
+                        .setSql("totalSize = totalSize + " + picture.getPicSize())
+                        .setSql("totalCount = totalCount + 1")
+                        .update();
+                ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "Space size & count update failed!");
+            }
+            return picture;
+        });
+
         return PictureVO.objToVo(picture);
     }
 
@@ -158,6 +219,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Long reviewerId = pictureQueryRequest.getReviewerId();
         String sortField = pictureQueryRequest.getSortField();
         String sortOrder = pictureQueryRequest.getSortOrder();
+        Long spaceId = pictureQueryRequest.getSpaceId();
+        boolean nullSpaceId = pictureQueryRequest.isNullSpaceId();
         // Search from multiple fields
         if (StrUtil.isNotBlank(searchText)) {
             // Concatenate query condition
@@ -168,6 +231,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
         queryWrapper.eq(ObjUtil.isNotEmpty(id), "id", id);
         queryWrapper.eq(ObjUtil.isNotEmpty(userId), "userId", userId);
+        queryWrapper.eq(ObjUtil.isNotEmpty(spaceId), "spaceId", spaceId);
+        queryWrapper.isNull(nullSpaceId, "spaceId");
         queryWrapper.like(StrUtil.isNotBlank(name), "name", name);
         queryWrapper.like(StrUtil.isNotBlank(introduction), "introduction", introduction);
         queryWrapper.like(StrUtil.isNotBlank(picFormat), "picFormat", picFormat);
@@ -347,6 +412,80 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             }
         }
         return uploadCount;
+    }
+
+    @Override
+    public void checkPictureAuth(User loginUser, Picture picture) {
+        Long spaceId = picture.getSpaceId();
+        if (spaceId == null) {
+            // public, only self and admin
+            if (!picture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            }
+        } else {
+            // private space, only space admin
+            if (!picture.getUserId().equals(loginUser.getId())) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            }
+        }
+    }
+
+    /**
+     * delete picture in database (include delete in COS)
+     * @param pictureId
+     * @param loginUser
+     */
+    @Override
+    public void deletePicture(long pictureId, User loginUser) {
+        ThrowUtils.throwIf(pictureId <= 0, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR);
+        // check picture exist
+        Picture oldPicture = this.getById(pictureId);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        // check auth
+        checkPictureAuth(loginUser, oldPicture);
+
+        // execute transaction
+        transactionTemplate.execute(status -> {
+            // remove from database
+            boolean result = this.removeById(pictureId);
+            ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "Delete Error, database operation failed!");
+
+            boolean update = spaceService.lambdaUpdate()
+                    .eq(Space::getId, oldPicture.getSpaceId())
+                    .setSql("totalSize = totalSize - " + oldPicture.getPicSize())
+                    .setSql("totalCount = totalCount - 1")
+                    .update();
+            ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "Space size & count update failed!");
+            return true;
+        });
+
+        // delete in COS
+        pictureFileCleaner.clearPictureFile(oldPicture);
+    }
+
+    @Override
+    public void editPicture(PictureEditRequest pictureEditRequest, User loginUser) {
+        // dto -> picture
+        Picture picture = new Picture();
+        BeanUtils.copyProperties(pictureEditRequest, picture);
+        // notice: list -> string
+        picture.setTags(JSONUtil.toJsonStr(pictureEditRequest.getTags()));
+        // manually set edit time (updateTime automatically)
+        picture.setEditTime(new Date());
+        // valid picture
+        this.validPicture(picture);
+        // check exist
+        long id = pictureEditRequest.getId();
+        Picture oldPicture = this.getById(id);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        // check auth
+        checkPictureAuth(loginUser, oldPicture);
+        // fill review
+        this.fillReviewParams(picture, loginUser);
+        // update in database
+        boolean result = this.updateById(picture);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
     }
 
 }

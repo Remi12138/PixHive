@@ -53,5 +53,13 @@ public class PictureQueryRequest extends PageRequest implements Serializable {
 
     private Date reviewTime;
 
+    private Long spaceId;
+
+    /**
+     * query only the data whose spaceId is null -> public
+     */
+    private boolean nullSpaceId;
+
+
     private static final long serialVersionUID = 1L;
 }
