@@ -31,42 +31,15 @@
     </div>
 
     <!-- picture list -->
-    <a-list
-      :grid="{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 4, xl: 5, xxl: 6 }"
-      :data-source="dataList"
-      :pagination="pagination"
-      :loading="loading"
-    >
-      <template #renderItem="{ item: picture }">
-        <a-list-item style="padding: 0">
-          <!-- single picture -->
-          <!-- object-fit: cover -> adjust,same width & height -->
-          <a-card hoverable @click="doClickPicture(picture)">
-          <template #cover>
-              <img
-                style="height: 180px; object-fit: cover"
-                :alt="picture.name"
-                :src="picture.thumbnailUrl ?? picture.url"
-                loading="lazy"
-              />
-            </template>
-            <a-card-meta :title="picture.name">
-              <template #description>
-                <a-flex>
-                  <a-tag color="green">
-                    {{ picture.category ?? 'Default' }}
-                  </a-tag>
-                  <a-tag v-for="tag in picture.tags" :key="tag">
-                    {{ tag }}
-                  </a-tag>
-                </a-flex>
-              </template>
-            </a-card-meta>
-          </a-card>
-        </a-list-item>
-      </template>
-    </a-list>
-
+    <PictureList :dataList="dataList" :loading="loading" />
+    <!-- pagination -->
+    <a-pagination
+      style="text-align: right"
+      v-model:current="searchParams.current"
+      v-model:pageSize="searchParams.pageSize"
+      :total="total"
+      @change="onPageChange"
+    />
   </div>
 </template>
 
@@ -75,6 +48,7 @@ import { reactive, ref, onMounted, computed } from "vue"
 import { message } from 'ant-design-vue'
 import { listPictureTagCategoryUsingGet, listPictureVoByPageUsingPost } from '@/api/pictureController'
 import { useRouter } from "vue-router";
+import PictureList from '@/components/PictureList.vue'
 
 const dataList = ref([])
 const total = ref(0)
@@ -89,19 +63,11 @@ const searchParams = reactive<API.PictureQueryRequest>({
 })
 
 // page params
-const pagination = computed(() => {
-  return {
-    current: searchParams.current ?? 1,
-    pageSize: searchParams.pageSize ?? 10,
-    total: total.value,
-    // when switch page number, modify search params, retrieve data
-    onChange: (page: number, pageSize: number) => {
-      searchParams.current = page
-      searchParams.pageSize = pageSize
-      fetchData()
-    },
+const onPageChange = (page: number, pageSize: number) => {
+    searchParams.current = page
+    searchParams.pageSize = pageSize
+    fetchData()
   }
-})
 
 // fetch data
 const fetchData = async () => {
@@ -160,14 +126,6 @@ onMounted(() => {
   getTagCategoryOptions()
 })
 
-const router = useRouter()
-
-// Jump to picture details
-const doClickPicture = (picture) => {
-  router.push({
-    path: `/picture/${picture.id}`,
-  })
-}
 </script>
 
 <style scoped>

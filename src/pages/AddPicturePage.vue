@@ -3,13 +3,17 @@
     <h2 style="margin-bottom: 16px">
       {{ route.query?.id ? 'Edit Picture' : 'Create Picture' }}
     </h2>
+    <a-typography-paragraph v-if="spaceId" type="secondary">
+      Save to Space: <a :href="`/space/${spaceId}`" target="_blank">{{ spaceId }}</a>
+    </a-typography-paragraph>
+
     <!-- choose how to upload -->
     <a-tabs v-model:activeKey="uploadType">
       <a-tab-pane key="file" tab="File Upload">
-        <PictureUpload :picture="picture" :onSuccess="onSuccess" />
+        <PictureUpload :picture="picture" :spaceId="spaceId" :onSuccess="onSuccess" />
       </a-tab-pane>
       <a-tab-pane key="url" tab="URL Upload" force-render>
-        <UrlPictureUpload :picture="picture" :onSuccess="onSuccess" />
+        <UrlPictureUpload :picture="picture" :spaceId="spaceId" :onSuccess="onSuccess" />
       </a-tab-pane>
     </a-tabs>
 
@@ -52,7 +56,7 @@
 
 <script setup lang="ts">
 import PictureUpload from '@/components/PictureUpload.vue'
-import { reactive, ref, onMounted } from "vue";
+import { reactive, ref, onMounted, computed } from "vue";
 import { editPictureUsingPost, getPictureVoByIdUsingGet, listPictureTagCategoryUsingGet } from '@/api/pictureController'
 import { useRouter, useRoute } from "vue-router";
 import { message } from 'ant-design-vue'
@@ -61,13 +65,19 @@ import UrlPictureUpload from '@/components/UrlPictureUpload.vue'
 const picture = ref<API.PictureVO>();
 const pictureForm = reactive<API.PictureEditRequest>({});
 const uploadType = ref<'file' | 'url'>('file');
+const route = useRoute()
+const router = useRouter()
+
+const spaceId = computed(() => {
+  return route.query?.spaceId
+})
+
 
 const onSuccess = (newPicture: API.PictureVO) => {
   picture.value = newPicture;
   pictureForm.name = newPicture.name;
 }
 
-const router = useRouter()
 
 /**
  * submit form
@@ -80,6 +90,7 @@ const handleSubmit = async (values: any) => {
   }
   const res = await editPictureUsingPost({
     id: pictureId,
+    spaceId: spaceId.value,
     ...values,
   })
   if (res.data.code === 0 && res.data.data) {
@@ -121,7 +132,6 @@ onMounted(() => {
   getTagCategoryOptions()
 })
 
-const route = useRoute()
 
 // get Old Picture
 const getOldPicture = async () => {

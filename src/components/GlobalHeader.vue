@@ -29,10 +29,17 @@
             </ASpace>
             <template #overlay>
               <a-menu>
+                <a-menu-item>
+                  <router-link to="/my_space">
+                    <UserOutlined />
+                    My Space
+                  </router-link>
+                </a-menu-item>
                 <a-menu-item @click="doLogout">
                   <LogoutOutlined />
                   Logout
                 </a-menu-item>
+
               </a-menu>
             </template>
           </a-dropdown>
@@ -46,7 +53,7 @@
 </template>
 <script lang="ts" setup>
 import { h, ref, computed } from 'vue'
-import { HomeOutlined, LogoutOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons-vue'
 import { MenuProps } from 'ant-design-vue'
 
 const loginUserStore = useLoginUserStore()
@@ -60,14 +67,14 @@ const originItems = [
     title: 'Home',
   },
   {
-    key: '/admin/userManage',
-    label: 'User Manage',
-    title: 'User Manage',
-  },
-  {
     key: '/add_picture',
     label: 'Add Picture',
     title: 'Add Picture',
+  },
+  {
+    key: '/admin/userManage',
+    label: 'User Manage',
+    title: 'User Manage',
   },
   {
     key: '/admin/pictureManage',
@@ -75,9 +82,14 @@ const originItems = [
     title: 'Picture Manage',
   },
   {
+    key: '/admin/spaceManage',
+    label: 'Space Manage',
+    title: 'Space Manage',
+  },
+  {
     key: 'others',
-    label: h('a', { href: 'https://linkedin.com/in/xianjing-jin-huang', target: '_blank' }, 'LinkedIn'),
-    title: 'LinkedIn',
+    label: h('a', { href: 'https://linkedin.com/in/xianjing-jin-huang', target: '_blank' }, 'About'),
+    title: 'About',
   },
 ]
 

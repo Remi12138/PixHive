@@ -17,6 +17,7 @@ import { uploadPictureByUrlUsingPost } from '@/api/pictureController'
 
 interface Props {
   picture?: API.PictureVO
+  spaceId?: number
   onSuccess?: (newPicture: API.PictureVO) => void
 }
 
@@ -34,6 +35,7 @@ const handleUpload = async () => {
     if (props.picture) {
       params.id = props.picture.id
     }
+    params.spaceId = props.spaceId
     const res = await uploadPictureByUrlUsingPost(params)
     if (res.data.code === 0 && res.data.data) {
       message.success('Upload Success!')
