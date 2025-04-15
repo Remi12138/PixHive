@@ -16,6 +16,7 @@ import com.jin.pixhive_backend.exception.ThrowUtils;
 import com.jin.pixhive_backend.model.dto.space.*;
 import com.jin.pixhive_backend.model.entity.Space;
 import com.jin.pixhive_backend.model.entity.User;
+import com.jin.pixhive_backend.model.enums.SpaceLevelEnum;
 import com.jin.pixhive_backend.model.vo.SpaceVO;
 import com.jin.pixhive_backend.service.SpaceService;
 import com.jin.pixhive_backend.service.UserService;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -195,4 +197,19 @@ public class SpaceController {
         return ResultUtils.success(true);
     }
 
+    /**
+     * get all level list, show on frontend
+     * @return
+     */
+    @GetMapping("/list/level")
+    public BaseResponse<List<SpaceLevel>> listSpaceLevel() {
+        List<SpaceLevel> spaceLevelList = Arrays.stream(SpaceLevelEnum.values())
+                .map(spaceLevelEnum -> new SpaceLevel(
+                        spaceLevelEnum.getValue(),
+                        spaceLevelEnum.getText(),
+                        spaceLevelEnum.getMaxCount(),
+                        spaceLevelEnum.getMaxSize()))
+                .collect(Collectors.toList());
+        return ResultUtils.success(spaceLevelList);
+    }
 }

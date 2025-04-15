@@ -323,21 +323,4 @@ public class PictureController {
         int uploadCount = pictureService.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
         return ResultUtils.success(uploadCount);
     }
-
-    /**
-     * get all level list, show on frontend
-     * @return
-     */
-    @GetMapping("/list/level")
-    public BaseResponse<List<SpaceLevel>> listSpaceLevel() {
-        List<SpaceLevel> spaceLevelList = Arrays.stream(SpaceLevelEnum.values()) // 获取所有枚举
-                .map(spaceLevelEnum -> new SpaceLevel(
-                        spaceLevelEnum.getValue(),
-                        spaceLevelEnum.getText(),
-                        spaceLevelEnum.getMaxCount(),
-                        spaceLevelEnum.getMaxSize()))
-                .collect(Collectors.toList());
-        return ResultUtils.success(spaceLevelList);
-    }
-
 }
