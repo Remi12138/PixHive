@@ -32,6 +32,9 @@
       </h2>
     </a-flex>
     <div style="margin-bottom: 16px" />
+    <!-- search form -->
+    <PictureSearchForm :onSearch="onSearch" />
+    <div style="margin-bottom: 16px" />
     <!-- picture list -->
     <PictureList :dataList="dataList" :loading="loading" :showOp="true" :onReload="fetchData"/>
     <!-- pagination -->
@@ -57,6 +60,7 @@ import { useRouter } from "vue-router";
 import { getSpaceVoByIdUsingGet, listSpaceVoByPageUsingPost } from '@/api/spaceController'
 import PictureList from '@/components/PictureList.vue'
 import { listPictureVoByPageUsingPost } from '@/api/pictureController'
+import PictureSearchForm from '@/components/PictureSearchForm.vue'
 
 
 const props = defineProps<{
@@ -91,7 +95,7 @@ const total = ref(0)
 const loading = ref(true)
 
 // search params
-const searchParams = reactive<API.PictureQueryRequest>({
+const searchParams = ref<API.PictureQueryRequest>({
   current: 1,
   pageSize: 12,
   sortField: 'createTime',
@@ -100,17 +104,17 @@ const searchParams = reactive<API.PictureQueryRequest>({
 
 // page params
 const onPageChange = (page, pageSize) => {
-  searchParams.current = page
-  searchParams.pageSize = pageSize
+  searchParams.value.current = page
+  searchParams.value.pageSize = pageSize
   fetchData()
 }
 
-
+// call backend to fetch pictures
 const fetchData = async () => {
   loading.value = true
   const params = {
     spaceId: props.id,
-    ...searchParams,
+    ...searchParams.value,
   }
   const res = await listPictureVoByPageUsingPost(params)
   if (res.data.data) {
@@ -120,6 +124,15 @@ const fetchData = async () => {
     message.error('Fetch Picture Error, ' + res.data.message)
   }
   loading.value = false
+}
+
+const onSearch = (newSearchParams: API.PictureQueryRequest) => {
+  searchParams.value = {
+    ...searchParams.value,
+    ...newSearchParams,
+    current: 1,
+  }
+  fetchData()
 }
 
 onMounted(() => {

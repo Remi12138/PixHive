@@ -32,6 +32,10 @@
               </template>
             </a-card-meta>
             <template v-if="showOp" #actions>
+              <a-space @click="e => doSearch(picture, e)">
+                <SearchOutlined />
+                Search
+              </a-space>
               <a-space @click="e => doEdit(picture, e)">
                 <EditOutlined />
                 Edit
@@ -50,7 +54,7 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons-vue'
+import { DeleteOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { deletePictureUsingPost } from '@/api/pictureController'
 import { message } from 'ant-design-vue'
 
@@ -100,6 +104,11 @@ const doDelete = async (picture, e) => {
   } else {
     message.error('Delete Error: ' + res.data.message)
   }
+}
+
+const doSearch = (picture, e) => {
+  e.stopPropagation()
+  window.open(`/search_picture?pictureId=${picture.id}`)
 }
 
 </script>
