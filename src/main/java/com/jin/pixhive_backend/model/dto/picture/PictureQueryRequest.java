@@ -60,6 +60,9 @@ public class PictureQueryRequest extends PageRequest implements Serializable {
      */
     private boolean nullSpaceId;
 
+    private Date startEditTime;
+
+    private Date endEditTime;
 
     private static final long serialVersionUID = 1L;
 }

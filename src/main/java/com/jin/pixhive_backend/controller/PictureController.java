@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.jin.pixhive_backend.annotation.AuthCheck;
+import com.jin.pixhive_backend.api.imagesearch.ImageSearchApiFacade;
+import com.jin.pixhive_backend.api.imagesearch.model.ImageSearchResult;
 import com.jin.pixhive_backend.common.BaseResponse;
 import com.jin.pixhive_backend.common.DeleteRequest;
 import com.jin.pixhive_backend.common.ResultUtils;
@@ -323,4 +325,20 @@ public class PictureController {
         int uploadCount = pictureService.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
         return ResultUtils.success(uploadCount);
     }
+
+    /**
+     * search similar request
+     */
+    @PostMapping("/search/picture")
+    public BaseResponse<List<ImageSearchResult>> searchPictureByPicture(@RequestBody SearchPictureByPictureRequest searchPictureByPictureRequest) {
+        ThrowUtils.throwIf(searchPictureByPictureRequest == null, ErrorCode.PARAMS_ERROR);
+        Long pictureId = searchPictureByPictureRequest.getPictureId();
+        ThrowUtils.throwIf(pictureId == null || pictureId <= 0, ErrorCode.PARAMS_ERROR);
+        Picture oldPicture = pictureService.getById(pictureId);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        String formatUrl = oldPicture.getUrl() + "?imageMogr2/format/png";
+        List<ImageSearchResult> resultList = ImageSearchApiFacade.searchImage(formatUrl);
+        return ResultUtils.success(resultList);
+    }
+
 }
