@@ -32,31 +32,34 @@
               </template>
             </a-card-meta>
             <template v-if="showOp" #actions>
-              <a-space @click="e => doSearch(picture, e)">
-                <SearchOutlined />
-                Search
-              </a-space>
-              <a-space @click="e => doEdit(picture, e)">
-                <EditOutlined />
-                Edit
-              </a-space>
-              <a-space @click="e => doDelete(picture, e)">
-                <DeleteOutlined />
-                Delete
-              </a-space>
+              <a-tooltip title="Search Similar">
+                <search-outlined @click="(e) => doSearch(picture, e)" />
+              </a-tooltip>
+              <a-tooltip title="Share">
+                <share-alt-outlined @click="(e) => doShare(picture, e)" />
+              </a-tooltip>
+              <a-tooltip title="Edit">
+                <edit-outlined @click="(e) => doEdit(picture, e)" />
+              </a-tooltip>
+              <a-tooltip title="Delete">
+                <delete-outlined @click="(e) => doDelete(picture, e)" />
+              </a-tooltip>
             </template>
           </a-card>
         </a-list-item>
       </template>
     </a-list>
+    <ShareModal ref="shareModalRef" :link="shareLink" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { DeleteOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import { DeleteOutlined, EditOutlined, SearchOutlined, ShareAltOutlined } from '@ant-design/icons-vue'
 import { deletePictureUsingPost } from '@/api/pictureController'
 import { message } from 'ant-design-vue'
+import { ref } from 'vue'
+import ShareModal from '@/components/ShareModal.vue'
 
 interface Props {
   dataList?: API.PictureVO[]
@@ -109,6 +112,17 @@ const doDelete = async (picture, e) => {
 const doSearch = (picture, e) => {
   e.stopPropagation()
   window.open(`/search_picture?pictureId=${picture.id}`)
+}
+
+const shareModalRef = ref()
+const shareLink = ref<string>()
+
+const doShare = (picture: API.PictureVO, e: Event) => {
+  e.stopPropagation()
+  shareLink.value = `${window.location.protocol}//${window.location.host}/picture/${picture.id}`
+  if (shareModalRef.value) {
+    shareModalRef.value.openModal()
+  }
 }
 
 </script>

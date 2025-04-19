@@ -37,7 +37,7 @@
     <div style="margin-bottom: 16px" />
     <!-- search picture by color -->
     <a-form-item label="Search Picture by Color" style="margin-top: 16px">
-      <color-picker format="hex" @pureColorChange="onColorChange" />
+      <color-picker format="hex" @pureColorChange="onColorChange" /> Top 12 sorted by color similarity
     </a-form-item>
     <div style="margin-bottom: 16px" />
     <!-- picture list -->
