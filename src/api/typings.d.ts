@@ -236,6 +236,14 @@ declare namespace API {
     userId?: number
   }
 
+  type PictureEditByBatchRequest = {
+    category?: string
+    nameRule?: string
+    pictureIdList?: number[]
+    spaceId?: number
+    tags?: string[]
+  }
+
   type PictureEditRequest = {
     category?: string
     id?: number
@@ -326,7 +334,11 @@ declare namespace API {
   }
 
   type SearchPictureByColorRequest = {
+    current?: number
+    pageSize?: number
     picColor?: string
+    sortField?: string
+    sortOrder?: string
     spaceId?: number
   }
 

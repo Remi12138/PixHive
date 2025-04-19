@@ -19,6 +19,7 @@
           <a-button type="primary" :href="`/add_picture?spaceId=${id}`" target="_blank">
             + Add Picture
           </a-button>
+          <a-button :icon="h(EditOutlined)" @click="doBatchEdit"> Batch Edit</a-button>
           <a-tooltip
             :title="`Space Usage: ${formatSize(space.totalSize)} / ${formatSize(space.maxSize)}`"
           >
@@ -51,7 +52,12 @@
       :show-total="() => `Picture Count: ${total} / ${space.maxCount}`"
       @change="onPageChange"
     />
-
+    <BatchEditPictureModal
+      ref="batchEditPictureModalRef"
+      :spaceId="id"
+      :pictureList="dataList"
+      :onSuccess="onBatchEditPictureSuccess"
+    />
   </div>
 </template>
 
@@ -68,6 +74,7 @@ import { listPictureVoByPageUsingPost, searchPictureByColorUsingPost } from '@/a
 import PictureSearchForm from '@/components/PictureSearchForm.vue'
 import { ColorPicker } from "vue3-colorpicker"
 import "vue3-colorpicker/style.css"
+import BatchEditPictureModal from '@/components/BatchEditPictureModal.vue'
 
 const props = defineProps<{
   id: string | number
@@ -159,6 +166,20 @@ const onColorChange = async (color: string) => {
     message.error('Search Picture by Color failed, ' + res.data.message)
   }
   loading.value = false
+}
+
+const batchEditPictureModalRef = ref()
+
+// after success in batch edit, refresh page data
+const onBatchEditPictureSuccess = () => {
+  fetchData()
+}
+
+// open batch edit modal
+const doBatchEdit = () => {
+  if (batchEditPictureModalRef.value) {
+    batchEditPictureModalRef.value.openModal()
+  }
 }
 
 
