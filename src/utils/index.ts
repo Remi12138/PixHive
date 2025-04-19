@@ -23,3 +23,17 @@ export function downloadImage(url?: string, fileName?: string) {
   saveAs(url, fileName)
 }
 
+/**
+ * picColor -> standard #RRGGBB
+ */
+export function toHexColor(input: string): string {
+  // remove "0x" prefix
+  const colorValue = input.startsWith('0x') ? input.slice(2) : input
+
+  // Remaining -> Hex -> 6-digit Hex String
+  const hexColor = parseInt(colorValue, 16).toString(16).padStart(6, '0')
+
+  // Return the standard #RRGGBB format
+  return `#${hexColor}`
+}
+

@@ -50,6 +50,19 @@
             <a-descriptions-item label="Size">
               {{ formatSize(picture.picSize) }}
             </a-descriptions-item>
+            <a-descriptions-item label="Color Theme">
+              <a-space>
+                {{ picture.picColor ?? '-' }}
+                <div
+                  v-if="picture.picColor"
+                  :style="{
+                    backgroundColor: toHexColor(picture.picColor),
+                    width: '16px',
+                    height: '16px',
+                  }"
+                />
+              </a-space>
+            </a-descriptions-item>
           </a-descriptions>
 
           <!--  picture download/edit/delete  -->
@@ -82,7 +95,7 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed, h } from "vue"
 import { message } from 'ant-design-vue'
-import { downloadImage, formatSize } from '@/utils'
+import { downloadImage, formatSize, toHexColor } from '@/utils'
 import { EditOutlined, DeleteOutlined, DownloadOutlined } from "@ant-design/icons-vue";
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import { useRouter } from "vue-router";

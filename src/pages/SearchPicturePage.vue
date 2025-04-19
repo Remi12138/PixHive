@@ -76,14 +76,14 @@ const fetchResultData = async () => {
     })
     if (res.data.code === 0 && res.data.data) {
       dataList.value = res.data.data ?? []
-      loading.value = false
     } else {
       message.error('Fetch Result Data failed, ' + res.data.message)
     }
   } catch (e: any) {
     message.error('Fetch Picture Detail Error: ' + e.message)
+  } finally {
+    loading.value = false
   }
-
 }
 
 onMounted(() => {

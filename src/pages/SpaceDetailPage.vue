@@ -35,6 +35,11 @@
     <!-- search form -->
     <PictureSearchForm :onSearch="onSearch" />
     <div style="margin-bottom: 16px" />
+    <!-- search picture by color -->
+    <a-form-item label="Search Picture by Color" style="margin-top: 16px">
+      <color-picker format="hex" @pureColorChange="onColorChange" />
+    </a-form-item>
+    <div style="margin-bottom: 16px" />
     <!-- picture list -->
     <PictureList :dataList="dataList" :loading="loading" :showOp="true" :onReload="fetchData"/>
     <!-- pagination -->
@@ -59,9 +64,10 @@ import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import { useRouter } from "vue-router";
 import { getSpaceVoByIdUsingGet, listSpaceVoByPageUsingPost } from '@/api/spaceController'
 import PictureList from '@/components/PictureList.vue'
-import { listPictureVoByPageUsingPost } from '@/api/pictureController'
+import { listPictureVoByPageUsingPost, searchPictureByColorUsingPost } from '@/api/pictureController'
 import PictureSearchForm from '@/components/PictureSearchForm.vue'
-
+import { ColorPicker } from "vue3-colorpicker"
+import "vue3-colorpicker/style.css"
 
 const props = defineProps<{
   id: string | number
@@ -138,6 +144,23 @@ const onSearch = (newSearchParams: API.PictureQueryRequest) => {
 onMounted(() => {
   fetchData()
 })
+
+const onColorChange = async (color: string) => {
+  loading.value = true
+  const res = await searchPictureByColorUsingPost({
+    picColor: color,
+    spaceId: props.id,
+  })
+  if (res.data.code === 0 && res.data.data) {
+    const data = res.data.data ?? [];
+    dataList.value = data;
+    total.value = data.length;
+  } else {
+    message.error('Search Picture by Color failed, ' + res.data.message)
+  }
+  loading.value = false
+}
+
 
 </script>
 

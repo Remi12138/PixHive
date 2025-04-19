@@ -68,12 +68,13 @@
 import { SmileOutlined, DownOutlined } from '@ant-design/icons-vue';
 import {
   deletePictureUsingPost, doPictureReviewUsingPost,
-  listPictureByPageUsingPost, listPictureTagCategoryUsingGet
+  listPictureByPageUsingPost, listPictureTagCategoryUsingGet, searchPictureByColorUsingPost
 } from '@/api/pictureController'
 import { ref, reactive, onMounted, computed } from "vue"
 import { message } from 'ant-design-vue'
 import dayjs from "dayjs"
 import PictureQueryRequest = API.PictureQueryRequest
+
 interface Props {
   onSearch?: (searchParams: PictureQueryRequest) => void
 }
