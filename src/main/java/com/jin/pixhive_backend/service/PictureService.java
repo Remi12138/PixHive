@@ -10,6 +10,7 @@ import com.jin.pixhive_backend.model.vo.PictureVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
 * @author xianjinghuang
@@ -96,4 +97,13 @@ public interface PictureService extends IService<Picture> {
     void deletePicture(long pictureId, User loginUser);
 
     void editPicture(PictureEditRequest pictureEditRequest, User loginUser);
+
+    /**
+     * search Picture By Color
+     * @param spaceId
+     * @param picColor
+     * @param loginUser
+     * @return
+     */
+    List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser);
 }

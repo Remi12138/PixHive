@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * search similar request
+ * search similar picture request
  */
 @Data
 public class SearchPictureByPictureRequest implements Serializable {

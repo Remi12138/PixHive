@@ -28,6 +28,8 @@ import com.jin.pixhive_backend.model.vo.UserVO;
 import com.jin.pixhive_backend.service.PictureService;
 import com.jin.pixhive_backend.service.SpaceService;
 import com.jin.pixhive_backend.service.UserService;
+import com.jin.pixhive_backend.utils.ColorHexExpanderUtils;
+import com.jin.pixhive_backend.utils.ColorSimilarUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import org.jsoup.Jsoup;
@@ -43,11 +45,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.awt.*;
 import java.io.IOException;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -163,6 +164,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         picture.setPicHeight(uploadPictureResult.getPicHeight());
         picture.setPicScale(uploadPictureResult.getPicScale());
         picture.setPicFormat(uploadPictureResult.getPicFormat());
+//        picture.setPicColor(uploadPictureResult.getPicColor());
+        // to standard RGB
+        picture.setPicColor(ColorHexExpanderUtils.expandHexColor(uploadPictureResult.getPicColor()));
         picture.setUserId(loginUser.getId());
         // fill review
         fillReviewParams(picture, loginUser);
@@ -493,6 +497,50 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // update in database
         boolean result = this.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+    }
+
+    @Override
+    public List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser) {
+        // 1. check params
+        ThrowUtils.throwIf(spaceId == null || StrUtil.isBlank(picColor), ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR);
+        // 2. check space auth
+        Space space = spaceService.getById(spaceId);
+        ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "The space does not exist!");
+        if (!loginUser.getId().equals(space.getUserId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "No permission to access this space!");
+        }
+        // 3. fetch space pictureList(must contain picColor)
+        List<Picture> pictureList = this.lambdaQuery()
+                .eq(Picture::getSpaceId, spaceId)
+                .isNotNull(Picture::getPicColor)
+                .list();
+        // if no pic, return empty list
+        if (CollUtil.isEmpty(pictureList)) {
+            return Collections.emptyList();
+        }
+        // picColor -> Color
+        Color targetColor = Color.decode(picColor);
+        // 4. compute and sort color similarity
+        List<Picture> sortedPictures = pictureList.stream()
+                .sorted(Comparator.comparingDouble(picture -> {
+                    String hexColor = picture.getPicColor();
+                    // if no picColor, put in the end
+                    if (StrUtil.isBlank(hexColor)) {
+                        return Double.MAX_VALUE;
+                    }
+                    Color pictureColor = Color.decode(hexColor);
+                    // big -> similar
+                    return -ColorSimilarUtils.calculateSimilarity(targetColor, pictureColor);
+                }))
+                // top 12
+                .limit(12)
+                .collect(Collectors.toList());
+
+        // Picture -> PictureVO
+        return sortedPictures.stream()
+                .map(PictureVO::objToVo)
+                .collect(Collectors.toList());
     }
 
 }

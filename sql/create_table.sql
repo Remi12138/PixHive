@@ -85,3 +85,6 @@ create table if not exists space
 ALTER TABLE picture
     ADD COLUMN spaceId  bigint  null comment 'space id (null: public space)';
 CREATE INDEX idx_spaceId ON picture (spaceId);
+
+ALTER TABLE picture
+    ADD COLUMN picColor varchar(16) null comment 'color scheme';
