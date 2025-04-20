@@ -76,6 +76,13 @@ public class UrlPictureUpload extends PictureUploadTemplate {
     @Override
     protected String getOriginFilename(Object inputSource) {
         String fileUrl = (String) inputSource;
+        // For AI outpainting return file, url may contain a lot params
+        // need to remove them
+        if (fileUrl.contains("result-") && fileUrl.contains("?OSSAccessKeyId")) {
+            int start = fileUrl.indexOf("result-");
+            int end = fileUrl.indexOf("?OSSAccessKeyId");
+            return fileUrl.substring(start, end);
+        }
         // get file name from URL
         return FileUtil.mainName(fileUrl);
     }
