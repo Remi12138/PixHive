@@ -18,13 +18,35 @@
     </a-tabs>
     <!-- Picture Edit -->
     <div v-if="picture" class="edit-bar">
-      <a-button :icon="h(EditOutlined)" @click="doEditPicture">Edit Picture</a-button>
+      <a-space size="middle">
+        <a-button :icon="h(EditOutlined)" @click="doEditPicture">Edit Picture</a-button>
+        <a-button :disabled="!isPictureEligibleForOutpainting" type="primary" ghost :icon="h(FullscreenOutlined)" @click="doImageOutPainting">
+          AI Outpainting
+        </a-button>
+      </a-space>
+      <div style="margin-bottom: 16px" />
+      <a-alert type="info" show-icon message="AI Outpainting Tip" style="margin-bottom: 16px; text-align: left">
+        <template #description>
+          <div>
+            To use the AI Outpainting feature, your picture must meet the following requirements:<br />
+            • Format: JPG, JPEG, PNG, HEIF, or WEBP<br />
+            • Size: No more than 10MB<br />
+            • Resolution: Between 512×512 and 4096×4096 pixels
+          </div>
+        </template>
+      </a-alert>
       <ImageCropper
         ref="imageCropperRef"
         :imageUrl="picture?.url"
         :picture="picture"
         :spaceId="spaceId"
         :onSuccess="onCropSuccess"
+      />
+      <ImageOutPainting
+        ref="imageOutPaintingRef"
+        :picture="picture"
+        :spaceId="spaceId"
+        :onSuccess="onImageOutPaintingSuccess"
       />
     </div>
     <!-- Picture Info -->
@@ -73,7 +95,8 @@ import { useRouter, useRoute } from "vue-router";
 import { message } from 'ant-design-vue'
 import UrlPictureUpload from '@/components/UrlPictureUpload.vue'
 import ImageCropper from '@/components/ImageCropper.vue'
-import { EditOutlined } from '@ant-design/icons-vue'
+import { EditOutlined, FullscreenOutlined } from '@ant-design/icons-vue'
+import ImageOutPainting from '@/components/ImageOutPainting.vue'
 
 
 const picture = ref<API.PictureVO>();
@@ -169,6 +192,7 @@ onMounted(() => {
   getOldPicture()
 })
 
+// ----------- Picture Edit (Basic Crop) -------------------
 const imageCropperRef = ref()
 
 const doEditPicture = () => {
@@ -180,6 +204,37 @@ const doEditPicture = () => {
 const onCropSuccess = (newPicture: API.PictureVO) => {
   picture.value = newPicture
 }
+
+// ----------- AI Outpainting -------------------
+
+const imageOutPaintingRef = ref()
+
+const doImageOutPainting = () => {
+  if (imageOutPaintingRef.value) {
+    imageOutPaintingRef.value.openModal()
+  }
+}
+
+const onImageOutPaintingSuccess = (newPicture: API.PictureVO) => {
+  picture.value = newPicture
+}
+
+const isPictureEligibleForOutpainting = computed(() => {
+  if (!picture.value) return false
+
+  const allowedFormats = ['jpg', 'jpeg', 'png', 'heif', 'webp']
+  const format = picture.value.picFormat?.toLowerCase()
+  const size = picture.value.picSize || 0
+  const width = picture.value.picWidth || 0
+  const height = picture.value.picHeight || 0
+
+  return (
+    allowedFormats.includes(format || '') &&
+    size <= 10 * 1024 * 1024 &&
+    width >= 512 && height >= 512 &&
+    width <= 4096 && height <= 4096
+  )
+})
 </script>
 
 <style scoped>
