@@ -61,3 +61,7 @@ cos:
     secretKey:
     region:
     bucket:
+
+# aliYun AI config
+aliYunAi:
+  apiKey: xxxx
