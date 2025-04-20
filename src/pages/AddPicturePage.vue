@@ -16,7 +16,18 @@
         <UrlPictureUpload :picture="picture" :spaceId="spaceId" :onSuccess="onSuccess" />
       </a-tab-pane>
     </a-tabs>
-
+    <!-- Picture Edit -->
+    <div v-if="picture" class="edit-bar">
+      <a-button :icon="h(EditOutlined)" @click="doEditPicture">Edit Picture</a-button>
+      <ImageCropper
+        ref="imageCropperRef"
+        :imageUrl="picture?.url"
+        :picture="picture"
+        :spaceId="spaceId"
+        :onSuccess="onCropSuccess"
+      />
+    </div>
+    <!-- Picture Info -->
     <a-form v-if="picture" layout="vertical" :model="pictureForm" @finish="handleSubmit">
       <a-form-item label="name" name="name">
         <a-input v-model:value="pictureForm.name" placeholder="Enter name" />
@@ -56,11 +67,14 @@
 
 <script setup lang="ts">
 import PictureUpload from '@/components/PictureUpload.vue'
-import { reactive, ref, onMounted, computed } from "vue";
+import { reactive, ref, onMounted, computed, h } from "vue";
 import { editPictureUsingPost, getPictureVoByIdUsingGet, listPictureTagCategoryUsingGet } from '@/api/pictureController'
 import { useRouter, useRoute } from "vue-router";
 import { message } from 'ant-design-vue'
 import UrlPictureUpload from '@/components/UrlPictureUpload.vue'
+import ImageCropper from '@/components/ImageCropper.vue'
+import { EditOutlined } from '@ant-design/icons-vue'
+
 
 const picture = ref<API.PictureVO>();
 const pictureForm = reactive<API.PictureEditRequest>({});
@@ -155,11 +169,26 @@ onMounted(() => {
   getOldPicture()
 })
 
+const imageCropperRef = ref()
+
+const doEditPicture = () => {
+  if (imageCropperRef.value) {
+    imageCropperRef.value.openModal()
+  }
+}
+
+const onCropSuccess = (newPicture: API.PictureVO) => {
+  picture.value = newPicture
+}
 </script>
 
 <style scoped>
 #addPicturePage {
   max-width: 720px;
   margin: 0 auto;
+}
+#addPicturePage .edit-bar {
+  text-align: center;
+  margin: 16px 0;
 }
 </style>
