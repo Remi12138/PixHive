@@ -19,6 +19,15 @@
           <a-button type="primary" :href="`/add_picture?spaceId=${id}`" target="_blank">
             + Add Picture
           </a-button>
+          <a-button
+            type="primary"
+            ghost
+            :icon="h(BarChartOutlined)"
+            :href="`/space_analyze?spaceId=${id}`"
+            target="_blank"
+          >
+            Space Analysis
+          </a-button>
           <a-button :icon="h(EditOutlined)" @click="doBatchEdit"> Batch Edit</a-button>
           <a-tooltip
             :title="`Space Usage: ${formatSize(space.totalSize)} / ${formatSize(space.maxSize)}`"
@@ -65,7 +74,7 @@
 import { reactive, ref, onMounted, computed, h } from "vue"
 import { message } from 'ant-design-vue'
 import { downloadImage, formatSize } from '@/utils'
-import { EditOutlined, DeleteOutlined, DownloadOutlined } from "@ant-design/icons-vue";
+import { EditOutlined, BarChartOutlined, DeleteOutlined, DownloadOutlined } from "@ant-design/icons-vue";
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import { useRouter } from "vue-router";
 import { getSpaceVoByIdUsingGet, listSpaceVoByPageUsingPost } from '@/api/spaceController'

@@ -6,7 +6,8 @@ export const formatSize = (size?: number) => {
   if (!size) return 'unknown'
   if (size < 1024) return size + ' B'
   if (size < 1024 * 1024) return (size / 1024).toFixed(2) + ' KB'
-  return (size / (1024 * 1024)).toFixed(2) + ' MB'
+  if (size < 1024 * 1024 * 1024) return (size / (1024 * 1024)).toFixed(2) + ' MB'
+  return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB'
 }
 
 import { saveAs } from 'file-saver';
