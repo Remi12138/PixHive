@@ -194,20 +194,14 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                 lockMap.remove(userId);
             }
         }
+    }
 
-//        String lock = String.valueOf(userId).intern();
-//        synchronized (lock) {
-//            Long newSpaceId = transactionTemplate.execute(status -> {
-//                // check exist
-//                boolean exists = this.lambdaQuery().eq(Space::getUserId, userId).exists();
-//                ThrowUtils.throwIf(exists, ErrorCode.OPERATION_ERROR, "Each user can have only one private space!");
-//                // save to database
-//                boolean result = this.save(space);
-//                ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "Save space to database failed!");
-//                return space.getId();
-//            });
-//            return Optional.ofNullable(newSpaceId).orElse(-1L);
-//        }
+    @Override
+    public void checkSpaceAuth(User loginUser, Space space) {
+        // self or admin
+        if (!space.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
     }
 }
 
