@@ -7,8 +7,8 @@ import lombok.Getter;
 public enum SpaceLevelEnum {
 
     STARTER("Starter", 0, 100, 100L * 1024 * 1024), // 100M
-    PRO("Pro", 1, 1000, 1000L * 1024 * 1024), // 1G
-    PREMIUM("Premium", 2, 10000, 10000L * 1024 * 1024); // 10G
+    PRO("Pro", 1, 1000, 1024L * 1024 * 1024), // 1G
+    PREMIUM("Premium", 2, 10000, 10240L * 1024 * 1024); // 10G
 
     private final String text;
 
