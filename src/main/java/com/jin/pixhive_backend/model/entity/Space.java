@@ -26,6 +26,11 @@ public class Space implements Serializable {
      */
     private Integer spaceLevel;
 
+    /**
+     * 0-private, 1-team
+     */
+    private Integer spaceType;
+
     private Long maxSize;
 
     private Long maxCount;

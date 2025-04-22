@@ -88,3 +88,25 @@ CREATE INDEX idx_spaceId ON picture (spaceId);
 
 ALTER TABLE picture
     ADD COLUMN picColor varchar(16) null comment 'color scheme';
+
+
+ALTER TABLE space
+    ADD COLUMN spaceType int default 0 not null comment '0-private 1-team';
+
+CREATE INDEX idx_spaceType ON space (spaceType);
+
+
+-- table: space_user
+create table if not exists space_user
+(
+    id         bigint auto_increment comment 'id' primary key,
+    spaceId    bigint                                 not null,
+    userId     bigint                                 not null,
+    spaceRole  varchar(128) default 'viewer'          null comment 'spaceRole: viewer/editor/admin',
+    createTime datetime     default CURRENT_TIMESTAMP not null,
+    updateTime datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+
+    UNIQUE KEY uk_spaceId_userId (spaceId, userId),
+    INDEX idx_spaceId (spaceId),
+    INDEX idx_userId (userId)
+) comment 'space_user' collate = utf8mb4_unicode_ci;
