@@ -31,6 +31,9 @@ import java.net.URL;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * delete file in COS
+ */
 @Slf4j
 @Component
 public class PictureFileCleaner {

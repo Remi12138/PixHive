@@ -50,6 +50,23 @@
             <artifactId>caffeine</artifactId>
             <version>2.9.3</version>
         </dependency>
+        <!-- Sa-Token Permission Authentication -->
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-spring-boot-starter</artifactId>
+            <version>1.39.0</version>
+        </dependency>
+        <!-- Sa-Token integrates Redis (using the jackson serialization method)） -->
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-redis-jackson</artifactId>
+            <version>1.39.0</version>
+        </dependency>
+        <!-- Provide a Redis connection pool -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+        </dependency>
         <!-- HTML parse：https://jsoup.org/ -->
         <dependency>
             <groupId>org.jsoup</groupId>

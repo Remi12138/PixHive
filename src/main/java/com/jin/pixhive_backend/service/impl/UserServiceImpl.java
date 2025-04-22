@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jin.pixhive_backend.exception.BusinessException;
 import com.jin.pixhive_backend.exception.ErrorCode;
+import com.jin.pixhive_backend.manage.auth.StpKit;
 import com.jin.pixhive_backend.model.dto.user.UserQueryRequest;
 import com.jin.pixhive_backend.model.entity.User;
 import com.jin.pixhive_backend.model.enums.UserRoleEnum;
@@ -100,6 +101,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         // 3. record user login state
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
+
+        // 4. record user in Sa-token, for space authentication
+        // ensure the expiration time of the user information is consistent with that in the SpringSession
+        StpKit.SPACE.login(user.getId());
+        StpKit.SPACE.getSession().set(USER_LOGIN_STATE, user);
+
         return this.getLoginUserVO(user);
     }
 

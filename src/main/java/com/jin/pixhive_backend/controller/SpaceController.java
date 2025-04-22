@@ -13,6 +13,7 @@ import com.jin.pixhive_backend.constant.UserConstant;
 import com.jin.pixhive_backend.exception.BusinessException;
 import com.jin.pixhive_backend.exception.ErrorCode;
 import com.jin.pixhive_backend.exception.ThrowUtils;
+import com.jin.pixhive_backend.manage.auth.SpaceUserAuthManager;
 import com.jin.pixhive_backend.model.dto.space.*;
 import com.jin.pixhive_backend.model.entity.Space;
 import com.jin.pixhive_backend.model.entity.User;
@@ -46,6 +47,9 @@ public class SpaceController {
 
     @Resource
     private SpaceService spaceService;
+
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
 
     @PostMapping("/add")
     public BaseResponse<Long> addSpace(@RequestBody SpaceAddRequest spaceAddRequest, HttpServletRequest request) {
@@ -128,8 +132,13 @@ public class SpaceController {
         // query
         Space space = spaceService.getById(id);
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
-        // get VO
-        return ResultUtils.success(spaceService.getSpaceVO(space, request));
+
+        SpaceVO spaceVO = spaceService.getSpaceVO(space, request);
+        User loginUser = userService.getLoginUser(request);
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
+        spaceVO.setPermissionList(permissionList);
+
+        return ResultUtils.success(spaceVO);
     }
 
     /**

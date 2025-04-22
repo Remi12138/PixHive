@@ -97,9 +97,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             Space space = spaceService.getById(spaceId);
             ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "Space not found!");
             // only space creator(admin) can upload
-            if (!loginUser.getId().equals(space.getUserId())) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "No permission to upload picture to this space!");
-            }
+            // ! has been changed to use annotation authentication
+//            if (!loginUser.getId().equals(space.getUserId())) {
+//                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "No permission to upload picture to this space!");
+//            }
             // check quota
             if (space.getTotalCount() >= space.getMaxCount()) {
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "Space max count exceeded!");
@@ -119,9 +120,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             Picture oldPicture = this.getById(pictureId);
             ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "Picture not exist. pictureId: " + pictureId);
             // self & admin can update
-            if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-            }
+            // ! has been changed to use annotation authentication
+//            if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+//                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+//            }
             // Check whether the space is the same as when created
             if (spaceId == null) {
                 // no pass spaceId, use old one (also works for public)
@@ -460,7 +462,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Picture oldPicture = this.getById(pictureId);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
         // check auth
-        checkPictureAuth(loginUser, oldPicture);
+        // ! has been changed to use annotation authentication
+        // checkPictureAuth(loginUser, oldPicture);
 
         // execute transaction
         transactionTemplate.execute(status -> {
@@ -499,7 +502,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Picture oldPicture = this.getById(id);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
         // check auth
-        checkPictureAuth(loginUser, oldPicture);
+        // ! has been changed to use annotation authentication
+        // checkPictureAuth(loginUser, oldPicture);
         // fill review
         this.fillReviewParams(picture, loginUser);
         // update in database
@@ -627,7 +631,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Picture picture = Optional.ofNullable(this.getById(pictureId))
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_ERROR));
         // check auth
-        checkPictureAuth(loginUser, picture);
+        // ! has been changed to use annotation authentication
+        // checkPictureAuth(loginUser, picture);
         // Construct the request parameters
         CreateOutPaintingTaskRequest taskRequest = new CreateOutPaintingTaskRequest();
         CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();
