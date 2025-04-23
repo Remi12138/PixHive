@@ -1,7 +1,7 @@
 <template>
   <div id="addSpacePage">
     <h2 style="margin-bottom: 16px">
-      {{ route.query?.id ? 'Edit Space' : 'Create Space' }}
+      {{ route.query?.id ? 'Edit ' : 'Create ' }}{{ SPACE_TYPE_MAP[spaceType]  }}
     </h2>
 
     <a-form layout="vertical" :model="spaceForm" @finish="handleSubmit">
@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from "vue";
+import { reactive, ref, onMounted, computed } from "vue";
 import {
   addSpaceUsingPost,
   editSpaceUsingPost,
@@ -60,7 +60,7 @@ import {
 } from '@/api/spaceController'
 import { useRouter, useRoute } from "vue-router";
 import { message } from 'ant-design-vue'
-import { SPACE_LEVEL_ENUM, SPACE_LEVEL_OPTIONS } from '@/constants/space'
+import { SPACE_LEVEL_ENUM, SPACE_LEVEL_OPTIONS, SPACE_TYPE_ENUM, SPACE_TYPE_MAP } from '@/constants/space'
 import { formatSize } from '../utils'
 import { listSpaceLevelUsingGet } from '@/api/spaceController'
 
@@ -71,8 +71,14 @@ const spaceForm = reactive<API.SpaceAddRequest | API.SpaceUpdateRequest>({
 })
 const loading = ref(false)
 const router = useRouter()
-
 const spaceLevelList = ref<API.SpaceLevel[]>([])
+
+const spaceType = computed(() => {
+  if (route.query?.type) {
+    return Number(route.query.type)
+  }
+  return SPACE_TYPE_ENUM.PRIVATE // default: private space
+})
 
 // fetch SpaceLevelList
 const fetchSpaceLevelList = async () => {
@@ -105,6 +111,7 @@ const handleSubmit = async (values: any) => {
   } else { // create
     res = await addSpaceUsingPost({
       ...spaceForm,
+      spaceType: spaceType.value,
     })
   }
   if (res.data.code === 0 && res.data.data) {

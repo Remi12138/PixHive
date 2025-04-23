@@ -27,6 +27,15 @@
           allow-clear
         />
       </a-form-item>
+      <a-form-item label="spaceType" name="spaceType">
+        <a-select
+          v-model:value="searchParams.spaceType"
+          :options="SPACE_TYPE_OPTIONS"
+          placeholder="Please select space type"
+          style="min-width: 180px"
+          allow-clear
+        />
+      </a-form-item>
       <a-form-item label="userId" name="userId">
         <a-input v-model:value="searchParams.userId" placeholder="Please enter user Id" allow-clear />
       </a-form-item>
@@ -48,6 +57,10 @@
         <!-- space level -->
         <template v-if="column.dataIndex === 'spaceLevel'">
           <a-tag>{{ SPACE_LEVEL_MAP[record.spaceLevel] }}</a-tag>
+        </template>
+        <!-- space type -->
+        <template v-if="column.dataIndex === 'spaceType'">
+          <a-tag>{{ SPACE_TYPE_MAP[record.spaceType] }}</a-tag>
         </template>
         <!-- space use info -->
         <template v-if="column.dataIndex === 'spaceUseInfo'">
@@ -86,7 +99,7 @@ import { ref, reactive, onMounted, computed } from "vue"
 import { message } from 'ant-design-vue'
 import dayjs from "dayjs"
 import {
-  SPACE_LEVEL_MAP, SPACE_LEVEL_OPTIONS
+  SPACE_LEVEL_MAP, SPACE_LEVEL_OPTIONS, SPACE_TYPE_MAP, SPACE_TYPE_OPTIONS
 } from '../../constants/space'
 import { formatSize } from '../../utils'
 const columns = [
@@ -102,6 +115,10 @@ const columns = [
   {
     title: 'spaceLevel',
     dataIndex: 'spaceLevel',
+  },
+  {
+    title: 'spaceType',
+    dataIndex: 'spaceType',
   },
   {
     title: 'spaceUseInfo',

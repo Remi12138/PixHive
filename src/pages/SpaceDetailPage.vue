@@ -4,7 +4,7 @@
     <a-flex justify="space-between" align="middle">
       <h2>
         <div style="margin-bottom: 8px" />
-        {{ space.spaceName }} (Private Space)
+        {{ space.spaceName }} [{{ SPACE_TYPE_MAP[space.spaceType] }}]
         <span
           v-if="space.spaceLevel !== undefined"
           class="tag-style"
@@ -16,10 +16,21 @@
       </h2>
       <h2>
         <a-space size="middle" >
-          <a-button type="primary" :href="`/add_picture?spaceId=${id}`" target="_blank">
+          <a-button v-if="canUploadPicture" type="primary" :href="`/add_picture?spaceId=${id}`" target="_blank">
             + Add Picture
           </a-button>
           <a-button
+            v-if="canManageSpaceUser"
+            type="primary"
+            ghost
+            :icon="h(TeamOutlined)"
+            :href="`/spaceUserManage/${id}`"
+            target="_blank"
+          >
+            User Manage
+          </a-button>
+          <a-button
+            v-if="canManageSpaceUser"
             type="primary"
             ghost
             :icon="h(BarChartOutlined)"
@@ -28,7 +39,7 @@
           >
             Space Analysis
           </a-button>
-          <a-button :icon="h(EditOutlined)" @click="doBatchEdit"> Batch Edit</a-button>
+          <a-button v-if="canEditPicture" :icon="h(EditOutlined)" @click="doBatchEdit"> Batch Edit</a-button>
           <a-tooltip
             :title="`Space Usage: ${formatSize(space.totalSize)} / ${formatSize(space.maxSize)}`"
           >
@@ -51,7 +62,7 @@
     </a-form-item>
     <div style="margin-bottom: 16px" />
     <!-- picture list -->
-    <PictureList :dataList="dataList" :loading="loading" :showOp="true" :onReload="fetchData"/>
+    <PictureList :dataList="dataList" :loading="loading" :showOp="true" :onReload="fetchData" :canEdit="canEditPicture" :canDelete="canDeletePicture" />
     <!-- pagination -->
     <a-pagination
       style="text-align: right"
@@ -71,10 +82,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, computed, h } from "vue"
+import { reactive, ref, onMounted, computed, h, watch } from "vue"
 import { message } from 'ant-design-vue'
 import { downloadImage, formatSize } from '@/utils'
-import { EditOutlined, BarChartOutlined, DeleteOutlined, DownloadOutlined } from "@ant-design/icons-vue";
+import { EditOutlined, BarChartOutlined, TeamOutlined } from "@ant-design/icons-vue";
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import { useRouter } from "vue-router";
 import { getSpaceVoByIdUsingGet, listSpaceVoByPageUsingPost } from '@/api/spaceController'
@@ -84,11 +95,25 @@ import PictureSearchForm from '@/components/PictureSearchForm.vue'
 import { ColorPicker } from "vue3-colorpicker"
 import "vue3-colorpicker/style.css"
 import BatchEditPictureModal from '@/components/BatchEditPictureModal.vue'
+import { SPACE_PERMISSION_ENUM, SPACE_TYPE_MAP } from '../constants/space'
 
 const props = defineProps<{
   id: string | number
 }>()
 const space = ref<API.SpaceVO>({})
+
+// general Permission Checker
+function createPermissionChecker(permission: string) {
+  return computed(() => {
+    return (space.value.permissionList ?? []).includes(permission)
+  })
+}
+
+// specific Permission Checker
+const canManageSpaceUser = createPermissionChecker(SPACE_PERMISSION_ENUM.SPACE_USER_MANAGE)
+const canUploadPicture = createPermissionChecker(SPACE_PERMISSION_ENUM.PICTURE_UPLOAD)
+const canEditPicture = createPermissionChecker(SPACE_PERMISSION_ENUM.PICTURE_EDIT)
+const canDeletePicture = createPermissionChecker(SPACE_PERMISSION_ENUM.PICTURE_DELETE)
 
 // ---------------- fetch space detail ------------
 const fetchSpaceDetail = async () => {
@@ -190,6 +215,15 @@ const doBatchEdit = () => {
     batchEditPictureModalRef.value.openModal()
   }
 }
+
+// when id changes, must reload data
+watch(
+  () => props.id,
+  (newSpaceId) => {
+    fetchSpaceDetail()
+    fetchData()
+  },
+)
 
 
 </script>

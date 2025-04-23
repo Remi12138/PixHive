@@ -85,7 +85,7 @@
                 <EditOutlined />
               </template>
             </a-button>
-            <a-button :icon="h(DeleteOutlined)" v-if="canEdit" danger @click="doDelete">
+            <a-button :icon="h(DeleteOutlined)" v-if="canDelete" danger @click="doDelete">
               Delete
               <template #icon>
                 <DeleteOutlined />
@@ -108,6 +108,7 @@ import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import { useRouter } from "vue-router";
 import { deletePictureUsingPost, getPictureVoByIdUsingGet } from '@/api/pictureController'
 import ShareModal from '@/components/ShareModal.vue'
+import { SPACE_PERMISSION_ENUM } from '@/constants/space'
 
 interface Props {
   id: string | number
@@ -116,17 +117,29 @@ const props = defineProps<Props>()
 const picture = ref<API.PictureVO>({})
 const loginUserStore = useLoginUserStore()
 
+// general Permission Checker
+function createPermissionChecker(permission: string) {
+  return computed(() => {
+    return (picture.value.permissionList ?? []).includes(permission)
+  })
+}
+
+// specific Permission Checker
+const canEdit = createPermissionChecker(SPACE_PERMISSION_ENUM.PICTURE_EDIT)
+const canDelete = createPermissionChecker(SPACE_PERMISSION_ENUM.PICTURE_DELETE)
+
+
 // check edit authority
 // user state may change (login/out), need to update 'canEdit'-> computed
-const canEdit = computed(() => {
-  const loginUser = loginUserStore.loginUser;
-  if (!loginUser.id) {
-    return false
-  }
-  // self/admin
-  const user = picture.value.user || {}
-  return loginUser.id === user.id || loginUser.userRole === 'admin'
-})
+// const canEdit = computed(() => {
+//   const loginUser = loginUserStore.loginUser;
+//   if (!loginUser.id) {
+//     return false
+//   }
+//   // self/admin
+//   const user = picture.value.user || {}
+//   return loginUser.id === user.id || loginUser.userRole === 'admin'
+// })
 
 const router = useRouter()
 

@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineExpose } from 'vue'
+import { ref } from 'vue'
 import { reactive, onMounted } from 'vue'
 import {
   editPictureByBatchUsingPost,

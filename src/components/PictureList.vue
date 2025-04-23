@@ -38,10 +38,10 @@
               <a-tooltip title="Share">
                 <share-alt-outlined @click="(e) => doShare(picture, e)" />
               </a-tooltip>
-              <a-tooltip title="Edit">
+              <a-tooltip v-if="canEdit" title="Edit">
                 <edit-outlined @click="(e) => doEdit(picture, e)" />
               </a-tooltip>
-              <a-tooltip title="Delete">
+              <a-tooltip v-if="canDelete" title="Delete">
                 <delete-outlined @click="(e) => doDelete(picture, e)" />
               </a-tooltip>
             </template>
@@ -66,12 +66,16 @@ interface Props {
   loading?: boolean
   showOp?: boolean
   onReload?: () => void
+  canEdit?: boolean
+  canDelete?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   dataList: () => [],
   loading: false,
   showOp: false,
+  canEdit: false,
+  canDelete: false,
 })
 
 // Jump to picture details
