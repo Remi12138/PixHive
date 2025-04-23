@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jin.pixhive_backend.exception.BusinessException;
 import com.jin.pixhive_backend.exception.ErrorCode;
 import com.jin.pixhive_backend.exception.ThrowUtils;
+import com.jin.pixhive_backend.manage.sharding.DynamicShardingManager;
 import com.jin.pixhive_backend.model.dto.picture.PictureQueryRequest;
 import com.jin.pixhive_backend.model.dto.space.SpaceAddRequest;
 import com.jin.pixhive_backend.model.dto.space.SpaceQueryRequest;
@@ -27,6 +28,7 @@ import com.jin.pixhive_backend.mapper.SpaceMapper;
 import com.jin.pixhive_backend.service.SpaceUserService;
 import com.jin.pixhive_backend.service.UserService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -56,6 +58,11 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
     private SpaceUserService spaceUserService;
 
     Map<Long, Object> lockMap = new ConcurrentHashMap<>();
+
+    // sharding optional
+//    @Resource
+//    @Lazy
+//    private DynamicShardingManager dynamicShardingManager;
 
     @Override
     public void validSpace(Space space, boolean add) {
@@ -219,6 +226,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                         result = spaceUserService.save(spaceUser);
                         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "Setup creator to team admin failed!");
                     }
+                    // create sharding table [optional]
+//                    dynamicShardingManager.createSpacePictureTable(space);
                     return space.getId();
                 });
                 return Optional.ofNullable(newSpaceId).orElse(-1L);
