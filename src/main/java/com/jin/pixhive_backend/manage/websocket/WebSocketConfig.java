@@ -1,6 +1,5 @@
 package com.jin.pixhive_backend.manage.websocket;
 
-import com.jin.pixhive_backend.manage.websocket.model.PictureEditHandler;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;

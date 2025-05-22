@@ -1,10 +1,15 @@
-package com.jin.pixhive_backend.manage.websocket.model;
+package com.jin.pixhive_backend.manage.websocket;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.jin.pixhive_backend.manage.websocket.disruptor.PictureEditEventProducer;
+import com.jin.pixhive_backend.manage.websocket.model.PictureEditActionEnum;
+import com.jin.pixhive_backend.manage.websocket.model.PictureEditMessageTypeEnum;
+import com.jin.pixhive_backend.manage.websocket.model.PictureEditRequestMessage;
+import com.jin.pixhive_backend.manage.websocket.model.PictureEditResponseMessage;
 import com.jin.pixhive_backend.model.entity.User;
 import com.jin.pixhive_backend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +30,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PictureEditHandler extends TextWebSocketHandler {
     @Resource
     private UserService userService;
+
+    @Resource
+    private PictureEditEventProducer pictureEditEventProducer;
+
     // picture edit status
     // key: pictureId, value: current edit userId
     private final Map<Long, Long> pictureEditingUsers = new ConcurrentHashMap<>();
@@ -102,23 +111,25 @@ public class PictureEditHandler extends TextWebSocketHandler {
         Long pictureId = (Long) attributes.get("pictureId");
 
         // Call the corresponding message processing method
-        switch (pictureEditMessageTypeEnum) {
-            case ENTER_EDIT:
-                handleEnterEditMessage(pictureEditRequestMessage, session, user, pictureId);
-                break;
-            case EDIT_ACTION:
-                handleEditActionMessage(pictureEditRequestMessage, session, user, pictureId);
-                break;
-            case EXIT_EDIT:
-                handleExitEditMessage(pictureEditRequestMessage, session, user, pictureId);
-                break;
-            default:
-                PictureEditResponseMessage pictureEditResponseMessage = new PictureEditResponseMessage();
-                pictureEditResponseMessage.setType(PictureEditMessageTypeEnum.ERROR.getValue());
-                pictureEditResponseMessage.setMessage("Message Type Error");
-                pictureEditResponseMessage.setUser(userService.getUserVO(user));
-                session.sendMessage(new TextMessage(JSONUtil.toJsonStr(pictureEditResponseMessage)));
-        }
+//        switch (pictureEditMessageTypeEnum) {
+//            case ENTER_EDIT:
+//                handleEnterEditMessage(pictureEditRequestMessage, session, user, pictureId);
+//                break;
+//            case EDIT_ACTION:
+//                handleEditActionMessage(pictureEditRequestMessage, session, user, pictureId);
+//                break;
+//            case EXIT_EDIT:
+//                handleExitEditMessage(pictureEditRequestMessage, session, user, pictureId);
+//                break;
+//            default:
+//                PictureEditResponseMessage pictureEditResponseMessage = new PictureEditResponseMessage();
+//                pictureEditResponseMessage.setType(PictureEditMessageTypeEnum.ERROR.getValue());
+//                pictureEditResponseMessage.setMessage("Message Type Error");
+//                pictureEditResponseMessage.setUser(userService.getUserVO(user));
+//                session.sendMessage(new TextMessage(JSONUtil.toJsonStr(pictureEditResponseMessage)));
+//        }
+        // publish event to disruptor
+        pictureEditEventProducer.publishEvent(pictureEditRequestMessage, session, user, pictureId);
     }
 
     /**
