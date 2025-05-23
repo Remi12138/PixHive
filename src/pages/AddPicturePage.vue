@@ -40,6 +40,7 @@
         :imageUrl="picture?.url"
         :picture="picture"
         :spaceId="spaceId"
+        :space="space"
         :onSuccess="onCropSuccess"
       />
       <ImageOutPainting
@@ -89,7 +90,7 @@
 
 <script setup lang="ts">
 import PictureUpload from '@/components/PictureUpload.vue'
-import { reactive, ref, onMounted, computed, h } from "vue";
+import { reactive, ref, onMounted, computed, h, watchEffect } from "vue";
 import { editPictureUsingPost, getPictureVoByIdUsingGet, listPictureTagCategoryUsingGet } from '@/api/pictureController'
 import { useRouter, useRoute } from "vue-router";
 import { message } from 'ant-design-vue'
@@ -97,6 +98,7 @@ import UrlPictureUpload from '@/components/UrlPictureUpload.vue'
 import ImageCropper from '@/components/ImageCropper.vue'
 import { EditOutlined, FullscreenOutlined } from '@ant-design/icons-vue'
 import ImageOutPainting from '@/components/ImageOutPainting.vue'
+import { getSpaceVoByIdUsingGet } from '@/api/spaceController'
 
 
 const picture = ref<API.PictureVO>();
@@ -235,6 +237,25 @@ const isPictureEligibleForOutpainting = computed(() => {
     width <= 4096 && height <= 4096
   )
 })
+
+const space = ref<API.SpaceVO>()
+
+// fetch space info
+const fetchSpace = async () => {
+  if (spaceId.value) {
+    const res = await getSpaceVoByIdUsingGet({
+      id: spaceId.value,
+    })
+    if (res.data.code === 0 && res.data.data) {
+      space.value = res.data.data
+    }
+  }
+}
+
+watchEffect(() => {
+  fetchSpace()
+})
+
 </script>
 
 <style scoped>
