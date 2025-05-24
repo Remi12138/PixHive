@@ -184,7 +184,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>
                 <configuration>
-                    <mainClass>com.jin.pixhive_backend.PixHiveBackendApplication</mainClass>
+                    <mainClass>com.jin.pixhive.PixHiveBackendApplication</mainClass>
                     <skip>true</skip>
                 </configuration>
                 <executions>
