@@ -15,6 +15,11 @@ public interface UserConstant {
     String DEFAULT_ROLE = "user";
 
     /**
+     * vip
+     */
+    String VIP_ROLE = "vip";
+
+    /**
      * admin
      */
     String ADMIN_ROLE = "admin";

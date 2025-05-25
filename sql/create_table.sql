@@ -110,3 +110,10 @@ create table if not exists space_user
     INDEX idx_spaceId (spaceId),
     INDEX idx_userId (userId)
 ) comment 'space_user' collate = utf8mb4_unicode_ci;
+
+-- user table add vip
+ALTER TABLE user
+    -- add new col
+    ADD COLUMN vipExpireTime datetime     null,
+    ADD COLUMN vipCode       varchar(128) null comment 'vip redeem code',
+    ADD COLUMN vipNumber     bigint       null comment 'vip ID';

@@ -142,6 +142,16 @@ public class UserController {
     }
 
     /**
+     * self can revise name/avatar/password
+     */
+    @PostMapping("/user/updateProfile")
+    public BaseResponse<Boolean> updateProfile(@RequestBody UserProfileUpdateRequest updateRequest, HttpServletRequest request) {
+        boolean result = userService.updateUserProfile(updateRequest, request);
+        return ResultUtils.success(result);
+    }
+
+
+    /**
      * [ADMIN] get UserVO by page
      *
      * @param userQueryRequest Query request parameter
@@ -158,6 +168,19 @@ public class UserController {
         List<UserVO> userVOList = userService.getUserVOList(userPage.getRecords());
         userVOPage.setRecords(userVOList);
         return ResultUtils.success(userVOPage);
+    }
+
+    /**
+     * redeem vip
+     */
+    @PostMapping("/redeem/vip")
+    public BaseResponse<Boolean> exchangeVip(@RequestBody VipRedeemRequest vipRedeemRequest,
+                                             HttpServletRequest httpServletRequest) {
+        ThrowUtils.throwIf(vipRedeemRequest == null, ErrorCode.PARAMS_ERROR);
+        String vipCode = vipRedeemRequest.getVipCode();
+        User loginUser = userService.getLoginUser(httpServletRequest);
+        boolean result = userService.redeemVip(loginUser, vipCode);
+        return ResultUtils.success(result);
     }
 }
 

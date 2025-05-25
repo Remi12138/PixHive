@@ -1,6 +1,7 @@
 package com.jin.pixhive_backend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.jin.pixhive_backend.model.dto.user.UserProfileUpdateRequest;
 import com.jin.pixhive_backend.model.dto.user.UserQueryRequest;
 import com.jin.pixhive_backend.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -91,4 +92,13 @@ public interface UserService extends IService<User> {
      */
     boolean isAdmin(User user);
 
+    /**
+     * users can revise name/avatar/password themselves
+     */
+    boolean updateUserProfile(UserProfileUpdateRequest updateRequest, HttpServletRequest request);
+
+    /**
+     * redeem vip
+     */
+    boolean redeemVip(User user, String vipCode);
 }

@@ -25,5 +25,11 @@ public class UserVO implements Serializable {
 
     private Date createTime;
 
+    private Date vipExpireTime;
+
+    private String vipCode;
+
+    private Long vipNumber;
+
     private static final long serialVersionUID = 1L;
 }

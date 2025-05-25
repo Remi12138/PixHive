@@ -42,6 +42,12 @@ public class User implements Serializable {
 
     private Date updateTime;
 
+    private Date vipExpireTime;
+
+    private String vipCode;
+
+    private Long vipNumber;
+
     @TableLogic
     private Integer isDelete;
 

@@ -2,14 +2,20 @@ package com.jin.pixhive_backend.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jin.pixhive_backend.exception.BusinessException;
 import com.jin.pixhive_backend.exception.ErrorCode;
 import com.jin.pixhive_backend.manage.auth.StpKit;
+import com.jin.pixhive_backend.model.dto.user.UserProfileUpdateRequest;
 import com.jin.pixhive_backend.model.dto.user.UserQueryRequest;
+import com.jin.pixhive_backend.model.dto.user.VipCode;
 import com.jin.pixhive_backend.model.entity.User;
 import com.jin.pixhive_backend.model.enums.UserRoleEnum;
 import com.jin.pixhive_backend.model.vo.LoginUserVO;
@@ -18,16 +24,24 @@ import com.jin.pixhive_backend.service.UserService;
 import com.jin.pixhive_backend.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static com.jin.pixhive_backend.constant.UserConstant.USER_LOGIN_STATE;
+import static com.jin.pixhive_backend.constant.UserConstant.VIP_ROLE;
 
 /**
 * @author xianjinghuang
@@ -204,7 +218,146 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
     }
 
+    @Override
+    public boolean updateUserProfile(UserProfileUpdateRequest updateRequest, HttpServletRequest request) {
+        if (updateRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Missing update request");
+        }
+
+        User loginUser = this.getLoginUser(request);
+
+        User updateUser = new User();
+        updateUser.setId(loginUser.getId());
+
+        // Update userName if provided
+        if (StrUtil.isNotBlank(updateRequest.getUserName())) {
+            updateUser.setUserName(updateRequest.getUserName());
+        }
+
+        // Update userAvatar if provided
+        if (StrUtil.isNotBlank(updateRequest.getUserAvatar())) {
+            updateUser.setUserAvatar(updateRequest.getUserAvatar());
+        }
+
+        // Update password if provided (after encryption)
+        if (StrUtil.isNotBlank(updateRequest.getUserPassword())) {
+            updateUser.setUserPassword(getEncryptPassword(updateRequest.getUserPassword()));
+        }
+
+        boolean result = this.updateById(updateUser);
+        if (!result) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "Failed to update profile");
+        }
+
+        // Refresh session info after successful update
+        User refreshedUser = this.getById(loginUser.getId());
+        request.getSession().setAttribute(USER_LOGIN_STATE, refreshedUser);
+        StpKit.SPACE.getSession().set(USER_LOGIN_STATE, refreshedUser);
+
+        return true;
+    }
+
+
+    // region ------- The following code is for the user's vip redemption function --------
+
+    @Autowired
+    private ResourceLoader resourceLoader;
+
+    // File read/write lock (ensure concurrent security)
+    private final ReentrantLock fileLock = new ReentrantLock();
+
+
+    @Override
+    public boolean redeemVip(User user, String vipCode) {
+        // 1. check params
+        if (user == null || StrUtil.isBlank(vipCode)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 2. validate and Mark VipCode
+        VipCode targetCode = validateAndMarkVipCode(vipCode);
+        // 3. update User Vip Info in database
+        updateUserVipInfo(user, targetCode.getCode());
+        return true;
+    }
+
+    /**
+     * validate and Mark VipCode
+     */
+    private VipCode validateAndMarkVipCode(String vipCode) {
+        fileLock.lock(); // ensures the atomicity of file operations
+        try {
+            // read JSON
+            JSONArray jsonArray = readVipCodeFile();
+
+            // Search for matching unused redemption codes
+            List<VipCode> codes = JSONUtil.toList(jsonArray, VipCode.class);
+            VipCode target = codes.stream()
+                    .filter(code -> code.getCode().equals(vipCode) && !code.isHasUsed())
+                    .findFirst()
+                    .orElseThrow(() -> new BusinessException(ErrorCode.PARAMS_ERROR, "invalid VIP code"));
+
+            // mark as used
+            target.setHasUsed(true);
+
+            // update json file
+            writeVipCodeFile(JSONUtil.parseArray(codes));
+            return target;
+        } finally {
+            fileLock.unlock();
+        }
+    }
+
+    /**
+     * read VipCode JSON File
+     */
+    private JSONArray readVipCodeFile() {
+        try {
+            Resource resource = resourceLoader.getResource("classpath:biz/vipCode.json");
+            String content = FileUtil.readString(resource.getFile(), StandardCharsets.UTF_8);
+            return JSONUtil.parseArray(content);
+        } catch (IOException e) {
+            log.error("read VipCode File Failed", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "read VipCode File Failed");
+        }
+    }
+
+    /**
+     * write VipCode JSON File
+     */
+    private void writeVipCodeFile(JSONArray jsonArray) {
+        try {
+            Resource resource = resourceLoader.getResource("classpath:biz/vipCode.json");
+            FileUtil.writeString(jsonArray.toStringPretty(), resource.getFile(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            log.error("update VipCode File Failed", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "update VipCode File Failed");
+        }
+    }
+
+    /**
+     * update User Vip Info in database
+     */
+    private void updateUserVipInfo(User user, String usedVipCode) {
+        // expireTime + 1 year
+        Date expireTime = DateUtil.offsetMonth(new Date(), 12);
+
+        // Build the update object
+        User updateUser = new User();
+        updateUser.setId(user.getId());
+        updateUser.setVipExpireTime(expireTime);
+        updateUser.setVipCode(usedVipCode);
+        updateUser.setUserRole(VIP_ROLE);
+
+        // update in database
+        boolean updated = this.updateById(updateUser);
+        if (!updated) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "Failed to operate the database. Failed to redeem vip.");
+        }
+    }
+
+    // endregion ------- user's vip redemption function --------
 }
+
 
 
 
