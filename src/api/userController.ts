@@ -105,6 +105,21 @@ export async function userLogoutUsingPost(options?: { [key: string]: any }) {
   })
 }
 
+/** exchangeVip POST /api/user/redeem/vip */
+export async function exchangeVipUsingPost(
+  body: API.VipRedeemRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean_>('/api/user/redeem/vip', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
 /** userRegister POST /api/user/register */
 export async function userRegisterUsingPost(
   body: API.UserRegisterRequest,
@@ -126,6 +141,21 @@ export async function updateUserUsingPost(
   options?: { [key: string]: any }
 ) {
   return request<API.BaseResponseBoolean_>('/api/user/update', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
+/** updateProfile POST /api/user/user/updateProfile */
+export async function updateProfileUsingPost(
+  body: API.UserProfileUpdateRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean_>('/api/user/user/updateProfile', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

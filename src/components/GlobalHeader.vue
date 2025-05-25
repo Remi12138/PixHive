@@ -23,16 +23,39 @@
       <a-col flex="120px">
         <div v-if="loginUserStore.loginUser.id">
           <a-dropdown>
-            <ASpace>
-              <a-avatar :src="loginUserStore.loginUser.userAvatar" />
-              {{ loginUserStore.loginUser.userName ?? 'DefaultUser' }}
-            </ASpace>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <!-- VIP icon and label inline -->
+              <div v-if="isVip" style="display: flex; align-items: center; gap: 2px;">
+                <CrownOutlined style="color: #efcb03; font-size: 16px;" />
+                <span style="color: #efcb03; font-size: 12px; font-weight: 500;">VIP</span>
+              </div>
+
+              <!-- Avatar and name -->
+              <ASpace>
+                <a-avatar :src="loginUserStore.loginUser.userAvatar" />
+                <span>{{ loginUserStore.loginUser.userName ?? 'DefaultUser' }}</span>
+              </ASpace>
+            </div>
+<!--            <ASpace>-->
+<!--              <div v-if="loginUserStore.loginUser.vipCode" style="text-align: center">-->
+<!--                <CrownOutlined style="color: #efcb03; font-size: 16px; font-weight: 500;" />-->
+<!--                <div style="font-size: 10px; color: #efcb03; line-height: 1;">VIP</div>-->
+<!--              </div>-->
+<!--              <a-avatar :src="loginUserStore.loginUser.userAvatar" />-->
+<!--              <span>{{ loginUserStore.loginUser.userName ?? 'DefaultUser' }}</span>>-->
+<!--            </ASpace>-->
             <template #overlay>
               <a-menu>
                 <a-menu-item>
-                  <router-link to="/my_space">
+                  <router-link to="/user/profile">
                     <UserOutlined />
-                    My Space
+                    Profile
+                  </router-link>
+                </a-menu-item>
+                <a-menu-item>
+                  <router-link to="/my_space">
+                    <FileOutlined />
+                    Space
                   </router-link>
                 </a-menu-item>
                 <a-menu-item @click="doLogout">
@@ -53,7 +76,7 @@
 </template>
 <script lang="ts" setup>
 import { h, ref, computed } from 'vue'
-import { HomeOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined, LogoutOutlined, UserOutlined, CrownOutlined, FileOutlined } from '@ant-design/icons-vue'
 import { MenuProps } from 'ant-design-vue'
 
 const loginUserStore = useLoginUserStore()
@@ -70,6 +93,11 @@ const originItems = [
     key: '/add_picture',
     label: 'Add Picture',
     title: 'Add Picture',
+  },
+  {
+    key: '/user_redeem_vip',
+    label: 'VIP Redeem',
+    title: 'VIP Redeem',
   },
   {
     key: '/admin/userManage',
@@ -143,6 +171,13 @@ const doLogout = async () => {
     message.error('Logout error: ' + res.data.message)
   }
 }
+
+const isVip = computed(() => {
+  const user = loginUserStore.loginUser
+  if (!user.vipCode || !user.vipExpireTime) return false
+  return new Date() < new Date(user.vipExpireTime)
+})
+
 </script>
 
 <style scoped>

@@ -15,6 +15,8 @@ import SpaceDetailPage from '@/pages/SpaceDetailPage.vue'
 import SearchPicturePage from '@/pages/SearchPicturePage.vue'
 import SpaceAnalyzePage from '@/pages/SpaceAnalyzePage.vue'
 import SpaceUserManagePage from '@/pages/admin/SpaceUserManagePage.vue'
+import UserRedeemVipPage from '@/pages/UserRedeemVipPage.vue'
+import UserProfilePage from '@/pages/user/UserProfilePage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -98,6 +100,17 @@ const router = createRouter({
       name: 'search picture',
       component: SearchPicturePage,
     },
+    {
+      path: '/user_redeem_vip',
+      name: 'vip redeem',
+      component: UserRedeemVipPage,
+    },
+    {
+      path: '/user/profile',
+      name: 'UserProfile',
+      component: UserProfilePage,
+    }
+
   ],
 })
 
