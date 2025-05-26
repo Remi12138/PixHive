@@ -2,12 +2,41 @@
   <div class="profile-container">
     <h2>User Profile</h2>
     <a-form :model="formState" layout="vertical" @submit.prevent @finish="handleSubmit">
+      <!-- userName -->
       <a-form-item label="User Name" name="userName">
         <a-input v-model:value="formState.userName" placeholder="Enter new username" />
       </a-form-item>
 
-      <a-form-item label="Avatar URL" name="userAvatar">
-        <a-input v-model:value="formState.userAvatar" placeholder="Enter image URL" />
+      <!-- Avatar -->
+      <a-form-item label="Avatar" name="userAvatar">
+        <a-tabs v-model:activeKey="avatarUploadType">
+          <a-tab-pane key="file" tab="Upload File">
+            <a-upload
+              name="file"
+              :show-upload-list="false"
+
+              :custom-request="uploadAvatar"
+            >
+              <a-spin :spinning="avatarUploading">
+                <a-avatar
+                  :src="formState.userAvatar"
+                  shape="circle"
+                  size="large"
+                  style="cursor: pointer"
+                />
+              </a-spin>
+              <div style="margin-top: 8px; color: #1890ff;">Click avatar to upload</div>
+            </a-upload>
+          </a-tab-pane>
+
+          <a-tab-pane key="url" tab="Use URL">
+            <a-input
+              v-model:value="formState.userAvatar"
+              placeholder="Paste avatar image URL"
+              allow-clear
+            />
+          </a-tab-pane>
+        </a-tabs>
       </a-form-item>
 
       <!-- Password -->
@@ -44,8 +73,39 @@
 import { ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
-import { updateProfileUsingPost } from '@/api/userController'
+import { updateProfileUsingPost, uploadAvatarUsingPost } from '@/api/userController'
 import { useRouter } from 'vue-router'
+import type { UploadRequestOption as UploadRequestOptionType } from 'ant-design-vue/lib/upload/interface'
+
+const avatarUploadType = ref<'file' | 'url'>('file')
+const avatarUploading = ref(false)
+
+// Upload logic
+const uploadAvatar = async (options: UploadRequestOptionType) => {
+  const file = options.file as File
+  const formData = new FormData()
+  formData.append('file', file)
+
+  avatarUploading.value = true
+  try {
+    const res = await uploadAvatarUsingPost({}, file)
+    const { code, data, message: errMsg } = res?.data ?? {}
+
+    if (code === 0) {
+      formState.value.userAvatar = data
+      message.success('Avatar uploaded successfully!')
+      options.onSuccess?.({}, file)
+    } else {
+      message.error('Upload failed: ' + (errMsg || 'Unknown error'))
+      options.onError?.(new Error(errMsg || 'Upload failed'))
+    }
+  } catch (e) {
+    message.error('Upload error')
+    options.onError?.(e)
+  } finally {
+    avatarUploading.value = false
+  }
+}
 
 const router = useRouter()
 
