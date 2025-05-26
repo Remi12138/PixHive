@@ -16,6 +16,7 @@ import com.jin.pixhive_backend.model.vo.UserVO;
 import com.jin.pixhive_backend.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -150,6 +151,15 @@ public class UserController {
         return ResultUtils.success(result);
     }
 
+    @PostMapping("/avatar")
+    public BaseResponse<String> uploadAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Uploaded file is empty");
+        }
+
+        String url = userService.uploadUserAvatar(file, request);
+        return ResultUtils.success(url);
+    }
 
     /**
      * [ADMIN] get UserVO by page

@@ -7,6 +7,7 @@ import com.jin.pixhive_backend.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jin.pixhive_backend.model.vo.LoginUserVO;
 import com.jin.pixhive_backend.model.vo.UserVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -96,6 +97,11 @@ public interface UserService extends IService<User> {
      * users can revise name/avatar/password themselves
      */
     boolean updateUserProfile(UserProfileUpdateRequest updateRequest, HttpServletRequest request);
+
+    /**
+     * upload avatar to COS
+     */
+    String uploadUserAvatar(MultipartFile file, HttpServletRequest request);
 
     /**
      * redeem vip

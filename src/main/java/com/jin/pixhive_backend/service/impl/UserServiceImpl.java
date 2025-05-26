@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
@@ -12,7 +13,10 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jin.pixhive_backend.exception.BusinessException;
 import com.jin.pixhive_backend.exception.ErrorCode;
+import com.jin.pixhive_backend.exception.ThrowUtils;
 import com.jin.pixhive_backend.manage.auth.StpKit;
+import com.jin.pixhive_backend.manage.upload.FilePictureUpload;
+import com.jin.pixhive_backend.model.dto.file.UploadPictureResult;
 import com.jin.pixhive_backend.model.dto.user.UserProfileUpdateRequest;
 import com.jin.pixhive_backend.model.dto.user.UserQueryRequest;
 import com.jin.pixhive_backend.model.dto.user.VipCode;
@@ -29,9 +33,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -52,6 +56,10 @@ import static com.jin.pixhive_backend.constant.UserConstant.VIP_ROLE;
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     implements UserService{
+
+    @javax.annotation.Resource
+    private FilePictureUpload filePictureUpload;
+
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
         // 1. check
@@ -257,8 +265,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return true;
     }
 
+    @Override
+    public String uploadUserAvatar(MultipartFile file, HttpServletRequest request) {
+        User loginUser = this.getLoginUser(request);
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR);
+        log.info("Uploading avatar for userId={}, fileName={}", loginUser.getId(), file.getOriginalFilename());
 
-    // region ------- The following code is for the user's vip redemption function --------
+        String uploadPathPrefix = String.format("avatar/%s", loginUser.getId());
+        UploadPictureResult uploadPictureResult = filePictureUpload.uploadPicture(file, uploadPathPrefix);
+
+        return uploadPictureResult.getUrl();
+    }
+
+
+
+// region ------- The following code is for the user's vip redemption function --------
 
     @Autowired
     private ResourceLoader resourceLoader;
