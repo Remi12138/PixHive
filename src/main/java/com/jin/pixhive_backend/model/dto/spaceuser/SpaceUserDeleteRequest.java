@@ -5,19 +5,14 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * space_user edit request
+ * space_user delete request
  */
 @Data
-public class SpaceUserEditRequest implements Serializable {
+public class SpaceUserDeleteRequest implements Serializable {
 
     private Long spaceId;
 
     private Long spaceuserId;
-
-    /**
-     * spaceRole: viewer/editor/admin
-     */
-    private String spaceRole;
 
     private static final long serialVersionUID = 1L;
 }

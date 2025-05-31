@@ -14,6 +14,7 @@ import com.jin.pixhive_backend.manage.auth.annotation.SaSpaceCheckPermission;
 import com.jin.pixhive_backend.manage.auth.model.SpaceUserPermissionConstant;
 import com.jin.pixhive_backend.model.dto.space.*;
 import com.jin.pixhive_backend.model.dto.spaceuser.SpaceUserAddRequest;
+import com.jin.pixhive_backend.model.dto.spaceuser.SpaceUserDeleteRequest;
 import com.jin.pixhive_backend.model.dto.spaceuser.SpaceUserEditRequest;
 import com.jin.pixhive_backend.model.dto.spaceuser.SpaceUserQueryRequest;
 import com.jin.pixhive_backend.model.entity.Space;
@@ -64,12 +65,12 @@ public class SpaceUserController {
      */
     @PostMapping("/delete")
     @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.SPACE_USER_MANAGE)
-    public BaseResponse<Boolean> deleteSpaceUser(@RequestBody DeleteRequest deleteRequest,
+    public BaseResponse<Boolean> deleteSpaceUser(@RequestBody SpaceUserDeleteRequest deleteRequest,
                                                  HttpServletRequest request) {
-        if (deleteRequest == null || deleteRequest.getId() <= 0) {
+        if (deleteRequest == null || deleteRequest.getSpaceuserId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        long id = deleteRequest.getId();
+        long id = deleteRequest.getSpaceuserId();
         // check user exist
         SpaceUser oldSpaceUser = spaceUserService.getById(id);
         ThrowUtils.throwIf(oldSpaceUser == null, ErrorCode.NOT_FOUND_ERROR);
@@ -117,15 +118,16 @@ public class SpaceUserController {
     @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.SPACE_USER_MANAGE)
     public BaseResponse<Boolean> editSpaceUser(@RequestBody SpaceUserEditRequest spaceUserEditRequest,
                                                HttpServletRequest request) {
-        if (spaceUserEditRequest == null || spaceUserEditRequest.getId() <= 0) {
+        if (spaceUserEditRequest == null || spaceUserEditRequest.getSpaceuserId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
 
         SpaceUser spaceUser = new SpaceUser();
         BeanUtils.copyProperties(spaceUserEditRequest, spaceUser);
+        spaceUser.setId(spaceUserEditRequest.getSpaceuserId());
 
         spaceUserService.validSpaceUser(spaceUser, false);
-        long id = spaceUserEditRequest.getId();
+        long id = spaceUserEditRequest.getSpaceuserId();
         SpaceUser oldSpaceUser = spaceUserService.getById(id);
         ThrowUtils.throwIf(oldSpaceUser == null, ErrorCode.NOT_FOUND_ERROR);
         boolean result = spaceUserService.updateById(spaceUser);

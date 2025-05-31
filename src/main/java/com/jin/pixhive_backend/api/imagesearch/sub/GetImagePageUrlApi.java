@@ -35,7 +35,7 @@ public class GetImagePageUrlApi {
         try {
             // 2. send POST to baidu
             HttpResponse response = HttpRequest.post(url)
-                    // 这里需要指定acs-token 不然会响应系统异常
+                    // need add "acs-token" otherwise -> error
                     .header("acs-token", RandomUtil.randomString(1))
                     .form(formData)
                     .timeout(5000)
