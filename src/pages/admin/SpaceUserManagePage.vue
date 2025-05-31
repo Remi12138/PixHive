@@ -119,8 +119,14 @@ onMounted(() => {
 })
 
 const editSpaceRole = async (value, record) => {
+  const spaceId = props.id
+  if (!spaceId) {
+    return
+  }
+
   const res = await editSpaceUserUsingPost({
-    id: record.id,
+    spaceId: spaceId,
+    spaceuserId: record.id,
     spaceRole: value,
   })
   if (res.data.code === 0) {
@@ -134,7 +140,11 @@ const doDelete = async (id: string) => {
   if (!id) {
     return
   }
-  const res = await deleteSpaceUserUsingPost({ id })
+  const spaceId = props.id
+  if (!spaceId) {
+    return
+  }
+  const res = await deleteSpaceUserUsingPost({ spaceId: spaceId, spaceuserId: id })
   if (res.data.code === 0) {
     message.success('Delete success!')
     // refresh
@@ -158,7 +168,7 @@ const handleSubmit = async () => {
   })
   if (res.data.code === 0) {
     message.success('Add new user success!')
-    // 刷新数据
+
     fetchData()
   } else {
     message.error('Add new user failed, ' + res.data.message)

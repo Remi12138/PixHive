@@ -27,6 +27,11 @@ import { h, ref, computed, watchEffect } from 'vue'
 import { PictureOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons-vue'
 import { MenuProps } from 'ant-design-vue'
 import { listMyTeamSpaceUsingPost } from '@/api/spaceUserController'
+import emitter from '@/utils/eventBus'
+
+emitter.on('teamSpaceCreated', () => {
+  fetchTeamSpaceList()
+})
 
 const loginUserStore = useLoginUserStore()
 

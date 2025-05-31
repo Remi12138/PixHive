@@ -63,6 +63,8 @@ import { message } from 'ant-design-vue'
 import { SPACE_LEVEL_ENUM, SPACE_LEVEL_OPTIONS, SPACE_TYPE_ENUM, SPACE_TYPE_MAP } from '@/constants/space'
 import { formatSize } from '../utils'
 import { listSpaceLevelUsingGet } from '@/api/spaceController'
+import emitter from '@/utils/eventBus'
+
 
 const space = ref<API.SpaceVO>();
 const spaceForm = reactive<API.SpaceAddRequest | API.SpaceUpdateRequest>({
@@ -116,6 +118,10 @@ const handleSubmit = async (values: any) => {
   }
   if (res.data.code === 0 && res.data.data) {
     message.success("Create space success!")
+
+    // Emit event to notify sidebar
+    emitter.emit('teamSpaceCreated')
+
     let path = `/space/${spaceId ?? res.data.data}`
     router.push({
       path,

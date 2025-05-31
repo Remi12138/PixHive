@@ -15,46 +15,10 @@ export async function addUserUsingPost(body: API.UserAddRequest, options?: { [ke
 }
 
 /** uploadAvatar POST /api/user/avatar */
-// export async function uploadAvatarUsingPost(
-//   body: {},
-//   file?: File,
-//   options?: { [key: string]: any }
-// ) {
-//   const formData = new FormData()
-//
-//   if (file) {
-//     formData.append('file', file)
-//   }
-//
-//   Object.keys(body).forEach((ele) => {
-//     const item = (body as any)[ele]
-//
-//     if (item !== undefined && item !== null) {
-//       if (typeof item === 'object' && !(item instanceof File)) {
-//         if (item instanceof Array) {
-//           item.forEach((f) => formData.append(ele, f || ''))
-//         } else {
-//           formData.append(ele, JSON.stringify(item))
-//         }
-//       } else {
-//         formData.append(ele, item)
-//       }
-//     }
-//   })
-//
-//   return request<API.BaseResponseString_>('/api/user/avatar', {
-//     method: 'POST',
-//     data: formData,
-//     requestType: 'form',
-//     ...(options || {}),
-//   })
-// }
-import type { AxiosRequestConfig } from 'axios'
-
 export async function uploadAvatarUsingPost(
   body: {},
   file?: File,
-  options?: AxiosRequestConfig
+  options?: { [key: string]: any }
 ) {
   const formData = new FormData()
 
@@ -62,15 +26,18 @@ export async function uploadAvatarUsingPost(
     formData.append('file', file)
   }
 
-  Object.keys(body).forEach((key) => {
-    const item = (body as any)[key]
+  Object.keys(body).forEach((ele) => {
+    const item = (body as any)[ele]
+
     if (item !== undefined && item !== null) {
-      if (Array.isArray(item)) {
-        item.forEach((val) => formData.append(key, val ?? ''))
-      } else if (typeof item === 'object' && !(item instanceof File)) {
-        formData.append(key, JSON.stringify(item))
+      if (typeof item === 'object' && !(item instanceof File)) {
+        if (item instanceof Array) {
+          item.forEach((f) => formData.append(ele, f || ''))
+        } else {
+          formData.append(ele, JSON.stringify(item))
+        }
       } else {
-        formData.append(key, item)
+        formData.append(ele, item)
       }
     }
   })
@@ -78,13 +45,10 @@ export async function uploadAvatarUsingPost(
   return request<API.BaseResponseString_>('/api/user/avatar', {
     method: 'POST',
     data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+    requestType: 'form',
     ...(options || {}),
   })
 }
-
 
 /** deleteUser POST /api/user/delete */
 export async function deleteUserUsingPost(
