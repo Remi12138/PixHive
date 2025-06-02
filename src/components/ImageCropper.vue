@@ -31,7 +31,7 @@
     <!-- Collaborative editing operation -->
     <div class="image-edit-actions" v-if="isTeamSpace">
       <a-space>
-        <a-button v-if="editingUser" disabled> {{ editingUser.userName }}is editing...</a-button>
+        <a-button v-if="editingUser" disabled> {{ editingUser.userName }} is editing...</a-button>
         <a-button v-if="canEnterEdit" type="primary" ghost @click="enterEdit">Enter Edit</a-button>
         <a-button v-if="canExitEdit" danger ghost @click="exitEdit">Exit Edit</a-button>
       </a-space>
