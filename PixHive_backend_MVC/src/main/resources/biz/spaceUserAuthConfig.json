@@ -1,0 +1,62 @@
+{
+  "permissions": [
+    {
+      "key": "spaceUser:manage",
+      "name": "User Manage",
+      "description": "Manage space users, add or remove users"
+    },
+    {
+      "key": "picture:view",
+      "name": "View Picture",
+      "description": "View the pictures in the space"
+    },
+    {
+      "key": "picture:upload",
+      "name": "Upload Picture",
+      "description": "Upload pictures to the space"
+    },
+    {
+      "key": "picture:edit",
+      "name": "Edit Picture",
+      "description": "Edit Pictures"
+    },
+    {
+      "key": "picture:delete",
+      "name": "Delete Picture",
+      "description": "Delete pictures"
+    }
+  ],
+  "roles": [
+    {
+      "key": "viewer",
+      "name": "Viewer",
+      "permissions": [
+        "picture:view"
+      ],
+      "description": "Viewers can only view the space."
+    },
+    {
+      "key": "editor",
+      "name": "Editor",
+      "permissions": [
+        "picture:view",
+        "picture:upload",
+        "picture:edit",
+        "picture:delete"
+      ],
+      "description": "Editors can CURD pictures in the space."
+    },
+    {
+      "key": "admin",
+      "name": "Admin",
+      "permissions": [
+        "spaceUser:manage",
+        "picture:view",
+        "picture:upload",
+        "picture:edit",
+        "picture:delete"
+      ],
+      "description": "Admin can CRUD and manage users."
+    }
+  ]
+}
