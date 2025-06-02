@@ -35,6 +35,7 @@
 | AI Integration        | Large-scale AI API for Image Outpainting                 |
 
 ## Architecture Overview
+![](imgs/ArchitectureOverview.png)
 
 ## Setup
 
