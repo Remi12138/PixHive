@@ -23,7 +23,7 @@
 
 | Category              | Technology / Concept                                     |
 |-----------------------|----------------------------------------------------------|
-| Frontend              | Vue 3, Vite, TypeScript, CSS                             |
+| Frontend              | Vue 3, Vite, TypeScript                                  |
 | Backend               | Spring Boot, Java, RESTful APIs                          |
 | Storage               | COS (Cloud Object Storage)                               |
 | Communication         | WebSocket (Real-time Communication)                      |
